@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Oduncu & Et İmparatorluğu</title>
+<style>
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #1a241b;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  /* Top HUD */
+  #hud {
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .hud-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .pill {
+    background: rgba(18, 24, 20, 0.86);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(255, 255, 255, 0.14);
+    color: #fff;
+    padding: 7px 13px;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+  }
+  .pill.money {
+    border-color: rgba(250, 204, 21, 0.45);
+    color: #fde047;
+    font-size: 16px;
+  }
+  .btn-upgrade {
+    pointer-events: auto;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border: 1.5px solid #fde68a;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 14px;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(217, 119, 6, 0.4);
+    transition: transform 0.12s;
+  }
+  .btn-upgrade:active {
+    transform: scale(0.94);
+  }
+  /* Health bar pill */
+  .hp-wrap {
+    width: 68px;
+    height: 8px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .hp-fill {
+    height: 100%;
+    background: #22c55e;
+    width: 100%;
+    transition: width 0.15s, background 0.2s;
+  }
+
+  /* Modal */
+  #modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+    padding: 16px;
+  }
+  #modalOverlay.open {
+    display: flex;
+  }
+  .modal-card {
+    background: #18201a;
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border-radius: 22px;
+    width: 100%;
+    max-width: 440px;
+    max-height: 84vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 24px 50px rgba(0,0,0,0.6);
+    color: #f8fafc;
+  }
+  .modal-header {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .modal-title {
+    font-size: 18px;
+    font-weight: 800;
+  }
+  .close-btn {
+    background: rgba(255,255,255,0.12);
+    border: none;
+    color: #fff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .tabs {
+    display: flex;
+    padding: 8px 14px 0;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #94a3b8;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .tab-btn.active {
+    color: #fbbf24;
+    border-bottom-color: #fbbf24;
+  }
+  .modal-body {
+    padding: 14px 16px 20px;
+    overflow-y: auto;
+    touch-action: pan-y;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .upg-item {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .upg-info {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+  .upg-icon {
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 11px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .upg-name {
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .upg-lvl {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+  .buy-btn {
+    background: #22c55e;
+    color: #052e16;
+    border: none;
+    border-radius: 11px;
+    padding: 9px 14px;
+    font-weight: 800;
+    font-size: 13px;
+    cursor: pointer;
+    min-width: 84px;
+    text-align: center;
+  }
+  .buy-btn:disabled {
+    background: rgba(255,255,255,0.1);
+    color: #64748b;
+    cursor: not-allowed;
+  }
+  .custom-section {
+    margin-bottom: 8px;
+  }
+  .custom-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .swatch-btn {
+    background: rgba(255,255,255,0.06);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 10px 6px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .swatch-btn.selected {
+    border-color: #fbbf24;
+    background: rgba(251, 191, 36, 0.14);
+  }
+  .color-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.4);
+  }
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <div class="hud-group">
+    <div class="pill money">💰 <span id="moneyVal">0</span> ₺</div>
+    <div class="pill">🎒 <span id="bagTotalVal">0</span>/<span id="capVal">6</span></div>
+    <div class="pill">🪵 <span id="woodVal">0</span></div>
+    <div class="pill" id="plankPill" style="display:none">🪚 <span id="plankVal">0</span></div>
+    <div class="pill" id="furnPill" style="display:none">🪑 <span id="furnVal">0</span></div>
+    <div class="pill" id="meatPill" style="display:none">🥩 <span id="rawMeatVal">0</span> | 🍖 <span id="steakVal">0</span></div>
+    <div class="pill">❤️ <div class="hp-wrap"><div class="hp-fill" id="hpFill"></div></div></div>
+  </div>
+  <div class="hud-group">
+    <button class="btn-upgrade" id="openModalBtn">⚡ Geliştir</button>
+  </div>
+</div>
+
+<canvas id="game"></canvas>
+
+<div id="modalOverlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">⚙️ Kamp & Karakter</div>
+      <button class="close-btn" id="closeModalBtn">✕</button>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="upgrades">⚡ Geliştirmeler</button>
+      <button class="tab-btn" data-tab="workers">👷 Personel</button>
+      <button class="tab-btn" data-tab="style">🎨 Görünüm</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+let W = window.innerWidth, H = window.innerHeight, DPR = Math.min(window.devicePixelRatio || 1, 2);
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// --- GAME STATE ---
+const state = {
+  money: 0,
+  bag: { wood: 0, plank: 0, furn: 0, rawMeat: 0, steak: 0 },
+  counters: { wood: 0, plank: 0, furn: 0, steak: 0 }, // Tezgah stokları (sınırlı)
+  upgrades: {
+    axe: 1,
+    bag: 1,
+    speed: 1,
+    armor: 1,
+    counterCap: 1,
+    lumberjack: 0,
+    carrier: 0,
+    cashier: 0,
+    hunter: 0,
+    waiter: 0
+  },
+  unlocks: {
+    sawmill: false,      // 180
+    workshop: false,     // 750
+    goldForest: false,   // 1400
+    restaurant: false    // 2400
+  },
+  style: {
+    shirt: '#dc2626',
+    hat: 'none',
+    axeStyle: 'steel'
+  }
+};
+
+const COSTS = {
+  sawmill: 180,
+  workshop: 750,
+  goldForest: 1400,
+  restaurant: 2400
+};
+
+const UPGRADE_DEFS = [
+  { id: 'axe', tab: 'upgrades', icon: '🪓', name: 'Balta & Av Gücü', base: 45, mult: 1.55, max: 15 },
+  { id: 'bag', tab: 'upgrades', icon: '🎒', name: 'Sırt Çantası (+4)', base: 40, mult: 1.5, max: 15 },
+  { id: 'counterCap', tab: 'upgrades', icon: '📦', name: 'Tezgah Raf Limiti (+3)', base: 70, mult: 1.6, max: 10 },
+  { id: 'speed', tab: 'upgrades', icon: '🥾', name: 'Hareket Hızı', base: 55, mult: 1.6, max: 10 },
+  { id: 'armor', tab: 'upgrades', icon: '🛡️', name: 'Avcı Zırhı & Can', base: 160, mult: 1.65, max: 10 },
+  { id: 'lumberjack', tab: 'workers', icon: '👷', name: 'Yardımcı Oduncu', base: 95, mult: 1.75, max: 5 },
+  { id: 'carrier', tab: 'workers', icon: '🚚', name: 'Taşıyıcı İşçi', base: 115, mult: 1.8, max: 4 },
+  { id: 'cashier', tab: 'workers', icon: '🧑‍💼', name: 'Kereste Kasiyeri', base: 130, mult: 1.85, max: 3 },
+  { id: 'hunter', tab: 'workers', icon: '🏹', name: 'Dağ Avcısı', base: 420, mult: 1.85, max: 3, req: 'restaurant' },
+  { id: 'waiter', tab: 'workers', icon: '👨‍🍳', name: 'Restoran Garsonu', base: 480, mult: 1.9, max: 2, req: 'restaurant' }
+];
+
+function getUpgradeCost(def) {
+  const lvl = state.upgrades[def.id];
+  return Math.floor(def.base * Math.pow(def.mult, lvl - (def.tab === 'upgrades' ? 1 : 0)));
+}
+
+function getMaxBag() {
+  return 6 + (state.upgrades.bag - 1) * 4;
+}
+function getTotalBag() {
+  const b = state.bag;
+  return b.wood + b.plank + b.furn + b.rawMeat + b.steak;
+}
+function getCounterLimit() {
+  return 6 + (state.upgrades.counterCap - 1) * 3;
+}
+function getPlayerMaxHp() {
+  return 100 + (state.upgrades.armor - 1) * 35;
+}
+function getAttackPower() {
+  return 1 + (state.upgrades.axe - 1) * 0.85;
+}
+function getMoveSpeed() {
+  return 215 + (state.upgrades.speed - 1) * 20;
+}
+
+// --- WORLD LAYOUT ---
+const player = {
+  x: 0,
+  y: 40,
+  vx: 0,
+  vy: 0,
+  dir: 0,
+  walkAnim: 0,
+  swingAnim: 0,
+  hp: 100,
+  hurtTimer: 0,
+  hitCooldown: 0
+};
+
+// Facilities & Pads
+const PADS = {
+  // Sales Counters (Lumber Camp) - Deposit & Sell
+  sellWood:   { x: -165, y: 155, r: 34, type: 'sell', item: 'wood', price: 10, icon: '🪵' },
+  sellPlank:  { x: 0,    y: 155, r: 34, type: 'sell', item: 'plank', price: 32, icon: '🪚', req: 'sawmill' },
+  sellFurn:   { x: 165,  y: 155, r: 34, type: 'sell', item: 'furn', price: 95, icon: '🪑', req: 'workshop' },
+
+  // Trash Can (Lumber Camp left wall)
+  trashCamp:  { x: -235, y: 55,  r: 30, type: 'trash', icon: '🗑️' },
+
+  // Machines (Lumber Camp)
+  sawmillIn:  { x: -180, y: -35, r: 34, type: 'in', machine: 'sawmill', icon: '🪵' },
+  sawmillOut: { x: -65,  y: -35, r: 34, type: 'out', machine: 'sawmill', icon: '🪚' },
+  workIn:     { x: 65,   y: -35, r: 34, type: 'in', machine: 'workshop', icon: '🪚' },
+  workOut:    { x: 180,  y: -35, r: 34, type: 'out', machine: 'workshop', icon: '🪑' },
+
+  // Unlock Pads
+  unlockSawmill:    { x: -120, y: -35, r: 42, type: 'unlock', key: 'sawmill', cost: COSTS.sawmill, icon: '🪚' },
+  unlockWorkshop:   { x: 125,  y: -35, r: 42, type: 'unlock', key: 'workshop', cost: COSTS.workshop, icon: '🪑' },
+  unlockGoldForest: { x: 240,  y: -275, r: 42, type: 'unlock', key: 'goldForest', cost: COSTS.goldForest, icon: '🌲' },
+  unlockRestaurant: { x: 315,  y: 20,   r: 44, type: 'unlock', key: 'restaurant', cost: COSTS.restaurant, icon: '🍖' },
+
+  // Restaurant Pads
+  grillIn:    { x: 430, y: -45, r: 34, type: 'in', machine: 'grill', icon: '🥩' },
+  grillOut:   { x: 555, y: -45, r: 34, type: 'out', machine: 'grill', icon: '🍖' },
+  sellSteak:  { x: 590, y: 155, r: 38, type: 'sell', item: 'steak', price: 145, icon: '🍖', req: 'restaurant' },
+  trashRest:  { x: 785, y: 55,  r: 30, type: 'trash', icon: '🗑️', req: 'restaurant' }
+};
+
+const machines = {
+  sawmill:  { input: 0, output: 0, progress: 0, duration: 1.6 },
+  workshop: { input: 0, output: 0, progress: 0, duration: 2.2 },
+  grill:    { input: 0, output: 0, progress: 0, duration: 2.0 }
+};
+
+// Dropped ground items (guaranteed pickup if bag had no room or dropped)
+const groundItems = [];
+function spawnGroundItem(x, y, item, amount = 1) {
+  for (let i = 0; i < amount; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const r = 14 + Math.random() * 18;
+    groundItems.push({
+      x: x + Math.cos(a) * r,
+      y: y + Math.sin(a) * r,
+      item,
+      bob: Math.random() * Math.PI * 2
+    });
+  }
+}
+
+// Trees
+const trees = [];
+function initTrees() {
+  trees.length = 0;
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 6; col++) {
+      const x = -460 + col * 105 + (row % 2) * 30;
+      const y = -340 - row * 115;
+      trees.push({
+        x, y,
+        gold: false,
+        hp: 4,
+        maxHp: 4,
+        respawn: 0,
+        shake: 0,
+        scale: 0.92 + Math.random() * 0.16
+      });
+    }
+  }
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 3; col++) {
+      const x = 230 + col * 105 + (row % 2) * 25;
+      const y = -340 - row * 115;
+      trees.push({
+        x, y,
+        gold: true,
+        hp: 9,
+        maxHp: 9,
+        respawn: 0,
+        shake: 0,
+        scale: 1.05
+      });
+    }
+  }
+}
+initTrees();
+
+// Animals (Mountain Hunting Zone)
+const ANIMAL_TYPES = [
+  { type: 'deer', icon: '🦌', hp: 6, speed: 135, aggro: false, dmg: 0, meat: 2, color: '#d97706' },
+  { type: 'boar', icon: '🐗', hp: 11, speed: 120, aggro: true, dmg: 14, meat: 3, color: '#57534e' },
+  { type: 'wolf', icon: '🐺', hp: 15, speed: 150, aggro: true, dmg: 20, meat: 4, color: '#64748b' },
+  { type: 'bear', icon: '🐻', hp: 26, speed: 105, aggro: true, dmg: 30, meat: 6, color: '#78350f' }
+];
+const animals = [];
+function initAnimals() {
+  animals.length = 0;
+  const spots = [
+    { x: 640, y: -360, t: 0 }, { x: 820, y: -380, t: 0 }, { x: 1020, y: -350, t: 1 },
+    { x: 680, y: -530, t: 1 }, { x: 910, y: -540, t: 2 }, { x: 1100, y: -520, t: 0 },
+    { x: 720, y: -720, t: 2 }, { x: 960, y: -740, t: 3 }, { x: 1120, y: -700, t: 3 }
+  ];
+  spots.forEach(s => {
+    const def = ANIMAL_TYPES[s.t];
+    animals.push({
+      ...def,
+      homeX: s.x,
+      homeY: s.y,
+      x: s.x,
+      y: s.y,
+      maxHp: def.hp,
+      respawn: 0,
+      atkTimer: 0,
+      wanderAngle: Math.random() * Math.PI * 2,
+      wanderTimer: 1 + Math.random() * 2,
+      shake: 0
+    });
+  });
+}
+initAnimals();
+
+// Customers
+const customers = [];
+let custSpawnTimer = 0;
+
+function spawnCustomer() {
+  const stalls = ['wood'];
+  if (state.unlocks.sawmill) stalls.push('plank');
+  if (state.unlocks.workshop) stalls.push('furn');
+  if (state.unlocks.restaurant) stalls.push('steak', 'steak');
+
+  const item = stalls[Math.floor(Math.random() * stalls.length)];
+  const countInQueue = customers.filter(c => c.item === item).length;
+  if (countInQueue >= 3) return;
+
+  let targetX = -165;
+  if (item === 'plank') targetX = 0;
+  if (item === 'furn') targetX = 165;
+  if (item === 'steak') targetX = 590;
+
+  const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f97316', '#06b6d4'];
+  customers.push({
+    item,
+    want: 1 + Math.floor(Math.random() * 3),
+    x: targetX + (Math.random() * 140 - 70),
+    y: 440,
+    targetX,
+    state: 'arriving',
+    color: colors[Math.floor(Math.random() * colors.length)],
+    walk: 0
+  });
+}
+
+// Workers
+const workers = [];
+function syncWorkers() {
+  workers.length = 0;
+  for (let i = 0; i < state.upgrades.lumberjack; i++) {
+    workers.push({ role: 'lumberjack', x: -180 + i * 70, y: -260, bag: 0, cap: 5, swing: 0, walk: 0 });
+  }
+  for (let i = 0; i < state.upgrades.carrier; i++) {
+    workers.push({ role: 'carrier', x: -90 + i * 55, y: 20, carryItem: null, carryAmt: 0, cap: 4, walk: 0 });
+  }
+  for (let i = 0; i < state.upgrades.cashier; i++) {
+    const xs = [-165, 0, 165];
+    workers.push({ role: 'cashier', x: xs[i], y: 155, timer: 0 });
+  }
+  for (let i = 0; i < state.upgrades.hunter; i++) {
+    workers.push({ role: 'hunter', x: 640 + i * 60, y: -270, bag: 0, cap: 6, swing: 0, walk: 0 });
+  }
+  for (let i = 0; i < state.upgrades.waiter; i++) {
+    workers.push({ role: 'waiter', x: 590 + i * 35, y: 155, timer: 0 });
+  }
+}
+
+// Floating Texts & Particles
+const floaters = [];
+const particles = [];
+function addFloater(x, y, text, color = '#fde047') {
+  floaters.push({ x, y, text, color, life: 1.0 });
+}
+function addParticles(x, y, color, count = 6) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const sp = 45 + Math.random() * 90;
+    particles.push({
+      x, y,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp - 30,
+      color,
+      life: 0.45 + Math.random() * 0.25,
+      size: 3 + Math.random() * 3
+    });
+  }
+}
+
+// --- CONTROLS ---
+const joy = { active: false, startX: 0, startY: 0, curX: 0, curY: 0, dx: 0, dy: 0 };
+const keys = {};
+window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+let pointerDownTime = 0;
+let pointerDownPos = { x: 0, y: 0 };
+
+canvas.addEventListener('pointerdown', e => {
+  if (document.getElementById('modalOverlay').classList.contains('open')) return;
+  pointerDownTime = performance.now();
+  pointerDownPos = { x: e.clientX, y: e.clientY };
+  joy.active = true;
+  joy.startX = e.clientX;
+  joy.startY = e.clientY;
+  joy.curX = e.clientX;
+  joy.curY = e.clientY;
+  joy.dx = 0;
+  joy.dy = 0;
+});
+
+window.addEventListener('pointermove', e => {
+  if (!joy.active) return;
+  joy.curX = e.clientX;
+  joy.curY = e.clientY;
+  const rx = joy.curX - joy.startX;
+  const ry = joy.curY - joy.startY;
+  const dist = Math.hypot(rx, ry);
+  const maxR = 52;
+  if (dist > 4) {
+    const clamp = Math.min(dist, maxR) / maxR;
+    joy.dx = (rx / dist) * clamp;
+    joy.dy = (ry / dist) * clamp;
+  } else {
+    joy.dx = 0;
+    joy.dy = 0;
+  }
+});
+
+window.addEventListener('pointerup', e => {
+  if (joy.active) {
+    const dt = performance.now() - pointerDownTime;
+    const moved = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+    if (dt < 260 && moved < 14) {
+      const screenX = W / 2;
+      const screenY = H / 2;
+      if (Math.hypot(e.clientX - screenX, e.clientY - screenY) < 46) {
+        openModal();
+      }
+    }
+  }
+  joy.active = false;
+  joy.dx = 0;
+  joy.dy = 0;
+});
+
+// --- MODAL UI ---
+let activeTab = 'upgrades';
+const modalOverlay = document.getElementById('modalOverlay');
+document.getElementById('openModalBtn').addEventListener('click', openModal);
+document.getElementById('closeModalBtn').addEventListener('click', () => modalOverlay.classList.remove('open'));
+modalOverlay.addEventListener('click', e => {
+  if (e.target === modalOverlay) modalOverlay.classList.remove('open');
+});
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab = btn.dataset.tab;
+    renderModal();
+  });
+});
+
+function openModal() {
+  renderModal();
+  modalOverlay.classList.add('open');
+}
+
+function renderModal() {
+  const body = document.getElementById('modalBody');
+  body.innerHTML = '';
+
+  if (activeTab === 'upgrades' || activeTab === 'workers') {
+    UPGRADE_DEFS.filter(d => d.tab === activeTab).forEach(def => {
+      if (def.req && !state.unlocks[def.req]) return;
+      const lvl = state.upgrades[def.id];
+      const isMax = lvl >= def.max;
+      const cost = getUpgradeCost(def);
+      const item = document.createElement('div');
+      item.className = 'upg-item';
+      item.innerHTML = `
+        <div class="upg-info">
+          <div class="upg-icon">${def.icon}</div>
+          <div>
+            <div class="upg-name">${def.name}</div>
+            <div class="upg-lvl">${def.tab === 'upgrades' ? 'Seviye ' + lvl : lvl + ' / ' + def.max + ' Aktif'}</div>
+          </div>
+        </div>
+        <button class="buy-btn" ${isMax || state.money < cost ? 'disabled' : ''}>
+          ${isMax ? 'MAKS' : cost + ' ₺'}
+        </button>
+      `;
+      item.querySelector('button').addEventListener('click', () => {
+        if (!isMax && state.money >= cost) {
+          state.money -= cost;
+          state.upgrades[def.id]++;
+          if (def.id === 'armor') player.hp = getPlayerMaxHp();
+          syncWorkers();
+          updateHUD();
+          renderModal();
+        }
+      });
+      body.appendChild(item);
+    });
+  } else if (activeTab === 'style') {
+    const shirts = [
+      { id: '#dc2626', name: 'Kırmızı' },
+      { id: '#2563eb', name: 'Mavi' },
+      { id: '#16a34a', name: 'Orman' },
+      { id: '#f59e0b', name: 'Altın' }
+    ];
+    const hats = [
+      { id: 'none', icon: '🧑', name: 'Yok' },
+      { id: 'beanie', icon: '🧶', name: 'Bere' },
+      { id: 'cowboy', icon: '🤠', name: 'Şapka' },
+      { id: 'crown', icon: '👑', name: 'Taç' }
+    ];
+    const axes = [
+      { id: 'steel', icon: '🪓', name: 'Çelik' },
+      { id: 'double', icon: '⚔️', name: 'Çift' },
+      { id: 'gold', icon: '✨', name: 'Altın' },
+      { id: 'laser', icon: '⚡', name: 'Plazma' }
+    ];
+
+    body.innerHTML = `
+      <div class="custom-section">
+        <div class="custom-label">Gömlek Rengi</div>
+        <div class="swatch-grid" id="shirtGrid"></div>
+      </div>
+      <div class="custom-section">
+        <div class="custom-label">Şapka</div>
+        <div class="swatch-grid" id="hatGrid"></div>
+      </div>
+      <div class="custom-section">
+        <div class="custom-label">Balta Görünümü</div>
+        <div class="swatch-grid" id="axeGrid"></div>
+      </div>
+    `;
+
+    const sg = body.querySelector('#shirtGrid');
+    shirts.forEach(s => {
+      const b = document.createElement('button');
+      b.className = 'swatch-btn' + (state.style.shirt === s.id ? ' selected' : '');
+      b.innerHTML = `<span class="color-dot" style="background:${s.id}"></span>${s.name}`;
+      b.onclick = () => { state.style.shirt = s.id; renderModal(); };
+      sg.appendChild(b);
+    });
+
+    const hg = body.querySelector('#hatGrid');
+    hats.forEach(h => {
+      const b = document.createElement('button');
+      b.className = 'swatch-btn' + (state.style.hat === h.id ? ' selected' : '');
+      b.innerHTML = `<span style="font-size:20px">${h.icon}</span>${h.name}`;
+      b.onclick = () => { state.style.hat = h.id; renderModal(); };
+      hg.appendChild(b);
+    });
+
+    const ag = body.querySelector('#axeGrid');
+    axes.forEach(a => {
+      const b = document.createElement('button');
+      b.className = 'swatch-btn' + (state.style.axeStyle === a.id ? ' selected' : '');
+      b.innerHTML = `<span style="font-size:20px">${a.icon}</span>${a.name}`;
+      b.onclick = () => { state.style.axeStyle = a.id; renderModal(); };
+      ag.appendChild(b);
+    });
+  }
+}
+
+function updateHUD() {
+  document.getElementById('moneyVal').textContent = state.money;
+  document.getElementById('bagTotalVal').textContent = getTotalBag();
+  document.getElementById('capVal').textContent = getMaxBag();
+  document.getElementById('woodVal').textContent = state.bag.wood;
+
+  const pPill = document.getElementById('plankPill');
+  pPill.style.display = state.unlocks.sawmill ? 'flex' : 'none';
+  document.getElementById('plankVal').textContent = state.bag.plank;
+
+  const fPill = document.getElementById('furnPill');
+  fPill.style.display = state.unlocks.workshop ? 'flex' : 'none';
+  document.getElementById('furnVal').textContent = state.bag.furn;
+
+  const mPill = document.getElementById('meatPill');
+  mPill.style.display = state.unlocks.restaurant ? 'flex' : 'none';
+  document.getElementById('rawMeatVal').textContent = state.bag.rawMeat;
+  document.getElementById('steakVal').textContent = state.bag.steak;
+
+  const hpPct = Math.max(0, Math.min(100, (player.hp / getPlayerMaxHp()) * 100));
+  const hpFill = document.getElementById('hpFill');
+  hpFill.style.width = hpPct + '%';
+  hpFill.style.background = hpPct > 50 ? '#22c55e' : hpPct > 25 ? '#f59e0b' : '#ef4444';
+}
+
+// --- COLLISIONS & BOUNDS ---
+function resolveMovement(ent, nx, ny) {
+  const minX = -530;
+  const maxX = state.unlocks.restaurant ? 1200 : 320;
+  const minY = state.unlocks.restaurant ? -870 : -830;
+  const maxY = 210;
+
+  nx = Math.max(minX, Math.min(maxX, nx));
+  ny = Math.max(minY, Math.min(maxY, ny));
+
+  // Top fence y = -220
+  if ((ent.y >= -220 && ny < -220) || (ent.y <= -220 && ny > -220)) {
+    if (nx > -285 && nx < 285) {
+      const inTopGate = nx > -62 && nx < 62;
+      if (!inTopGate) ny = ent.y;
+    }
+  }
+  // Left fence x = -280
+  if ((ent.x >= -280 && nx < -280) || (ent.x <= -280 && nx > -280)) {
+    if (ny > -225 && ny < 225) nx = ent.x;
+  }
+  // Right fence x = 280
+  if ((ent.x <= 280 && nx > 280) || (ent.x >= 280 && nx < 280)) {
+    if (ny > -225 && ny < 225) {
+      const inRightGate = state.unlocks.restaurant && ny > -55 && ny < 75;
+      if (!inRightGate) nx = ent.x;
+    }
+  }
+
+  // Restaurant Fence Collisions
+  if (state.unlocks.restaurant) {
+    if ((ent.x <= 340 && nx > 340) || (ent.x >= 340 && nx < 340)) {
+      if (ny > -225 && ny < 225) {
+        if (!(ny > -55 && ny < 75)) nx = ent.x;
+      }
+    }
+    if ((ent.y >= -220 && ny < -220) || (ent.y <= -220 && ny > -220)) {
+      if (nx > 335 && nx < 845) {
+        if (!(nx > 640 && nx < 770)) ny = ent.y;
+      }
+    }
+    if ((ent.x <= 840 && nx > 840) || (ent.x >= 840 && nx < 840)) {
+      if (ny > -225 && ny < 225) nx = ent.x;
+    }
+    if (ent.x <= 545 && nx > 545 && ny > -250) nx = ent.x;
+  }
+
+  ent.x = nx;
+  ent.y = ny;
+}
+
+// --- UPDATE LOOP ---
+let padTimer = 0;
+let lastTime = performance.now();
+
+function update(dt) {
+  let ix = joy.dx;
+  let iy = joy.dy;
+  if (keys['w'] || keys['arrowup']) iy -= 1;
+  if (keys['s'] || keys['arrowdown']) iy += 1;
+  if (keys['a'] || keys['arrowleft']) ix -= 1;
+  if (keys['d'] || keys['arrowright']) ix += 1;
+
+  const mag = Math.hypot(ix, iy);
+  if (mag > 1) { ix /= mag; iy /= mag; }
+
+  if (mag > 0.05) {
+    const spd = getMoveSpeed();
+    resolveMovement(player, player.x + ix * spd * dt, player.y + iy * spd * dt);
+    player.dir = Math.atan2(iy, ix);
+    player.walkAnim += dt * 11;
+  } else {
+    player.walkAnim = 0;
+  }
+
+  // Pickup ground items whenever bag has space
+  for (let i = groundItems.length - 1; i >= 0; i--) {
+    const gi = groundItems[i];
+    gi.bob += dt * 5;
+    if (getTotalBag() < getMaxBag() && Math.hypot(player.x - gi.x, player.y - gi.y) < 48) {
+      state.bag[gi.item]++;
+      const iconMap = { wood: '🪵', plank: '🪚', furn: '🪑', rawMeat: '🥩', steak: '🍖' };
+      addFloater(gi.x, gi.y - 16, `+1 ${iconMap[gi.item]}`, '#fef08a');
+      groundItems.splice(i, 1);
+    }
+  }
+
+  // Passive HP regen inside camp
+  if (player.y > -210 && player.hp < getPlayerMaxHp()) {
+    player.hp = Math.min(getPlayerMaxHp(), player.hp + 12 * dt);
+  }
+  if (player.hurtTimer > 0) player.hurtTimer -= dt;
+  if (player.hitCooldown > 0) player.hitCooldown -= dt;
+  if (player.swingAnim > 0) player.swingAnim = Math.max(0, player.swingAnim - dt * 4.5);
+
+  // Auto-chop nearby trees (ALWAYS allows chopping; puts in bag if space, otherwise drops on ground!)
+  let choppedOrAttacked = false;
+  if (player.hitCooldown <= 0) {
+    for (const t of trees) {
+      if (t.respawn > 0) continue;
+      if (t.gold && !state.unlocks.goldForest) continue;
+      if (Math.hypot(player.x - t.x, player.y - t.y) < 56) {
+        player.hitCooldown = 0.35;
+        player.swingAnim = 1;
+        t.shake = 0.25;
+        t.hp -= getAttackPower();
+        addParticles(t.x, t.y - 18, t.gold ? '#fbbf24' : '#a16207', 5);
+        if (t.hp <= 0) {
+          t.respawn = t.gold ? 8 : 5.5;
+          const totalYield = t.gold ? 3 : 1;
+          const space = Math.max(0, getMaxBag() - getTotalBag());
+          const inBag = Math.min(totalYield, space);
+          const onGround = totalYield - inBag;
+
+          if (inBag > 0) {
+            state.bag.wood += inBag;
+            addFloater(t.x, t.y - 30, `+${inBag} 🪵`, '#fef08a');
+          }
+          if (onGround > 0) {
+            spawnGroundItem(t.x, t.y + 10, 'wood', onGround);
+            if (inBag === 0) addFloater(t.x, t.y - 30, '🎒 Dolu! (Yere Düştü)', '#fb923c');
+          }
+        }
+        choppedOrAttacked = true;
+        break;
+      }
+    }
+  }
+
+  // Auto-attack nearby animals
+  if (!choppedOrAttacked && state.unlocks.restaurant && player.hitCooldown <= 0) {
+    for (const a of animals) {
+      if (a.respawn > 0) continue;
+      if (Math.hypot(player.x - a.x, player.y - a.y) < 56) {
+        player.hitCooldown = 0.38;
+        player.swingAnim = 1;
+        a.shake = 0.25;
+        a.hp -= getAttackPower() * 1.25;
+        addParticles(a.x, a.y - 10, '#ef4444', 6);
+        if (a.hp <= 0) {
+          a.respawn = 9;
+          const space = Math.max(0, getMaxBag() - getTotalBag());
+          const inBag = Math.min(a.meat, space);
+          const onGround = a.meat - inBag;
+          if (inBag > 0) {
+            state.bag.rawMeat += inBag;
+            addFloater(a.x, a.y - 25, `+${inBag} 🥩`, '#fca5a5');
+          }
+          if (onGround > 0) {
+            spawnGroundItem(a.x, a.y + 10, 'rawMeat', onGround);
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  // Trees respawn & shake
+  for (const t of trees) {
+    if (t.shake > 0) t.shake = Math.max(0, t.shake - dt);
+    if (t.respawn > 0) {
+      t.respawn -= dt;
+      if (t.respawn <= 0) t.hp = t.maxHp;
+    }
+  }
+
+  // Animals AI
+  if (state.unlocks.restaurant) {
+    for (const a of animals) {
+      if (a.shake > 0) a.shake = Math.max(0, a.shake - dt);
+      if (a.respawn > 0) {
+        a.respawn -= dt;
+        if (a.respawn <= 0) {
+          a.hp = a.maxHp;
+          a.x = a.homeX;
+          a.y = a.homeY;
+        }
+        continue;
+      }
+      const distP = Math.hypot(player.x - a.x, player.y - a.y);
+      if (a.aggro && distP < 210 && player.y < -235) {
+        const ang = Math.atan2(player.y - a.y, player.x - a.x);
+        if (distP > 36) {
+          a.x += Math.cos(ang) * a.speed * dt;
+          a.y += Math.sin(ang) * a.speed * dt;
+        } else {
+          a.atkTimer -= dt;
+          if (a.atkTimer <= 0) {
+            a.atkTimer = 1.05;
+            player.hp -= a.dmg;
+            player.hurtTimer = 0.25;
+            addFloater(player.x, player.y - 34, `-${a.dmg} ❤️`, '#ef4444');
+            if (player.hp <= 0) {
+              player.hp = getPlayerMaxHp();
+              player.x = 0;
+              player.y = 40;
+              state.bag.rawMeat = Math.floor(state.bag.rawMeat / 2);
+              addFloater(0, 0, '💫 Kampa Döndün', '#f87171');
+            }
+          }
+        }
+      } else if (!a.aggro && distP < 150) {
+        const ang = Math.atan2(a.y - player.y, a.x - player.x);
+        a.x = Math.max(580, Math.min(1160, a.x + Math.cos(ang) * a.speed * dt));
+        a.y = Math.max(-830, Math.min(-270, a.y + Math.sin(ang) * a.speed * dt));
+      } else {
+        a.wanderTimer -= dt;
+        if (a.wanderTimer <= 0) {
+          a.wanderTimer = 1.5 + Math.random() * 2;
+          a.wanderAngle = Math.atan2(a.homeY - a.y, a.homeX - a.x) + (Math.random() - 0.5) * 2.2;
+        }
+        a.x += Math.cos(a.wanderAngle) * 32 * dt;
+        a.y += Math.sin(a.wanderAngle) * 32 * dt;
+      }
+    }
+  }
+
+  // Pad interactions
+  padTimer += dt;
+  if (padTimer >= 0.14) {
+    padTimer = 0;
+    const cLim = getCounterLimit();
+    for (const key in PADS) {
+      const p = PADS[key];
+      if (p.req && !state.unlocks[p.req]) continue;
+      if (p.type === 'unlock' && state.unlocks[p.key]) continue;
+      if (p.machine === 'sawmill' && !state.unlocks.sawmill) continue;
+      if (p.machine === 'workshop' && !state.unlocks.workshop) continue;
+      if (p.machine === 'grill' && !state.unlocks.restaurant) continue;
+
+      if (Math.hypot(player.x - p.x, player.y - p.y) <= p.r + 12) {
+        if (p.type === 'unlock') {
+          if (state.money >= p.cost) {
+            state.money -= p.cost;
+            state.unlocks[p.key] = true;
+            addParticles(p.x, p.y, '#fbbf24', 18);
+            addFloater(p.x, p.y - 25, '✨ AÇILDI!', '#fde047');
+          }
+        } else if (p.type === 'trash') {
+          if (getTotalBag() > 0) {
+            state.bag = { wood: 0, plank: 0, furn: 0, rawMeat: 0, steak: 0 };
+            addParticles(p.x, p.y, '#94a3b8', 12);
+            addFloater(p.x, p.y - 22, '🗑️ Çanta Boşaltıldı', '#cbd5e1');
+          }
+        } else if (p.type === 'in') {
+          const m = machines[p.machine];
+          if (p.machine === 'sawmill' && state.bag.wood > 0 && m.input < 12) {
+            state.bag.wood--; m.input++;
+          } else if (p.machine === 'workshop' && state.bag.plank > 0 && m.input < 10) {
+            state.bag.plank--; m.input++;
+          } else if (p.machine === 'grill' && state.bag.rawMeat > 0 && m.input < 10) {
+            state.bag.rawMeat--; m.input++;
+          }
+        } else if (p.type === 'out') {
+          const m = machines[p.machine];
+          if (m.output > 0 && getTotalBag() < getMaxBag()) {
+            m.output--;
+            if (p.machine === 'sawmill') state.bag.plank++;
+            if (p.machine === 'workshop') state.bag.furn++;
+            if (p.machine === 'grill') state.bag.steak++;
+          }
+        } else if (p.type === 'sell') {
+          // Deposit items onto counter shelf up to counter limit, AND sell directly if customer waiting
+          if (state.bag[p.item] > 0 && state.counters[p.item] < cLim) {
+            state.bag[p.item]--;
+            state.counters[p.item]++;
+          }
+          processSale(p.item, p.price, p.x, p.y, true);
+        }
+      }
+    }
+  }
+
+  // Machines processing
+  ['sawmill', 'workshop', 'grill'].forEach(k => {
+    const m = machines[k];
+    if (m.input > 0 && m.output < 12) {
+      m.progress += dt;
+      if (m.progress >= m.duration) {
+        m.progress = 0;
+        m.input--;
+        m.output++;
+      }
+    } else {
+      m.progress = 0;
+    }
+  });
+
+  // Customers logic
+  custSpawnTimer -= dt;
+  if (custSpawnTimer <= 0) {
+    custSpawnTimer = 2.4;
+    spawnCustomer();
+  }
+  for (let i = customers.length - 1; i >= 0; i--) {
+    const c = customers[i];
+    c.walk += dt * 8;
+    const sameQueue = customers.filter(o => o.item === c.item && o.state !== 'leaving');
+    const idx = sameQueue.indexOf(c);
+    const goalY = 250 + idx * 46;
+
+    if (c.state === 'arriving' || c.state === 'waiting') {
+      const dx = c.targetX - c.x;
+      const dy = goalY - c.y;
+      const d = Math.hypot(dx, dy);
+      if (d > 4) {
+        c.x += (dx / d) * 115 * dt;
+        c.y += (dy / d) * 115 * dt;
+        c.state = 'arriving';
+      } else {
+        c.state = 'waiting';
+      }
+    } else if (c.state === 'leaving') {
+      c.y += 145 * dt;
+      if (c.y > 470) customers.splice(i, 1);
+    }
+  }
+
+  // Workers AI
+  const cLim = getCounterLimit();
+  workers.forEach(w => {
+    if (w.role === 'lumberjack') {
+      if (w.swing > 0) w.swing -= dt * 4;
+      if (w.bag < w.cap) {
+        let best = null, bd = 9999;
+        for (const t of trees) {
+          if (t.respawn > 0 || (t.gold && !state.unlocks.goldForest)) continue;
+          const d = Math.hypot(w.x - t.x, w.y - t.y);
+          if (d < bd) { bd = d; best = t; }
+        }
+        if (best) {
+          if (bd > 44) {
+            const a = Math.atan2(best.y - w.y, best.x - w.x);
+            w.x += Math.cos(a) * 125 * dt;
+            w.y += Math.sin(a) * 125 * dt;
+            w.walk += dt * 9;
+          } else if (w.swing <= 0) {
+            w.swing = 1;
+            best.hp -= 1.2;
+            best.shake = 0.2;
+            if (best.hp <= 0) {
+              best.respawn = best.gold ? 8 : 5.5;
+              w.bag += best.gold ? 2 : 1;
+            }
+          }
+        }
+      } else {
+        // Deliver to sawmill if unlocked & not full, otherwise directly to wood counter shelf!
+        let tx = PADS.sellWood.x, ty = PADS.sellWood.y - 25, toSawmill = false;
+        if (state.unlocks.sawmill && machines.sawmill.input < 12) {
+          tx = PADS.sawmillIn.x;
+          ty = PADS.sawmillIn.y;
+          toSawmill = true;
+        }
+        const d = Math.hypot(tx - w.x, ty - w.y);
+        if (d > 24) {
+          const a = Math.atan2(ty - w.y, tx - w.x);
+          w.x += Math.cos(a) * 135 * dt;
+          w.y += Math.sin(a) * 135 * dt;
+          w.walk += dt * 9;
+        } else {
+          if (toSawmill) {
+            machines.sawmill.input += w.bag;
+            w.bag = 0;
+          } else if (state.counters.wood < cLim) {
+            const put = Math.min(w.bag, cLim - state.counters.wood);
+            state.counters.wood += put;
+            w.bag -= put;
+          }
+        }
+      }
+    } else if (w.role === 'carrier') {
+      // Transports produced items from Sawmill/Workshop/Grill to Sales Counters (or Workshop)
+      if (!w.carryItem || w.carryAmt <= 0) {
+        w.carryItem = null;
+        w.carryAmt = 0;
+        // Pick highest priority output available
+        let targetPad = null, pickType = null;
+        if (state.unlocks.workshop && machines.workshop.output > 0 && state.counters.furn < cLim) {
+          targetPad = PADS.workOut; pickType = 'furn';
+        } else if (state.unlocks.sawmill && machines.sawmill.output > 0) {
+          if (state.unlocks.workshop && machines.workshop.input < 8) {
+            targetPad = PADS.sawmillOut; pickType = 'plank_to_work';
+          } else if (state.counters.plank < cLim) {
+            targetPad = PADS.sawmillOut; pickType = 'plank';
+          }
+        } else if (state.unlocks.restaurant && machines.grill.output > 0 && state.counters.steak < cLim) {
+          targetPad = PADS.grillOut; pickType = 'steak';
+        }
+
+        if (targetPad) {
+          const d = Math.hypot(targetPad.x - w.x, targetPad.y - w.y);
+          if (d > 22) {
+            const a = Math.atan2(targetPad.y - w.y, targetPad.x - w.x);
+            w.x += Math.cos(a) * 145 * dt;
+            w.y += Math.sin(a) * 145 * dt;
+            w.walk += dt * 10;
+          } else {
+            const mKey = targetPad.machine;
+            const take = Math.min(w.cap, machines[mKey].output);
+            if (take > 0) {
+              machines[mKey].output -= take;
+              w.carryItem = pickType;
+              w.carryAmt = take;
+            }
+          }
+        }
+      } else {
+        // Deliver carried items
+        let destX = PADS.sellPlank.x, destY = PADS.sellPlank.y - 20;
+        if (w.carryItem === 'furn') { destX = PADS.sellFurn.x; destY = PADS.sellFurn.y - 20; }
+        else if (w.carryItem === 'plank_to_work') { destX = PADS.workIn.x; destY = PADS.workIn.y; }
+        else if (w.carryItem === 'steak') { destX = PADS.sellSteak.x; destY = PADS.sellSteak.y - 20; }
+
+        const d = Math.hypot(destX - w.x, destY - w.y);
+        if (d > 22) {
+          const a = Math.atan2(destY - w.y, destX - w.x);
+          w.x += Math.cos(a) * 145 * dt;
+          w.y += Math.sin(a) * 145 * dt;
+          w.walk += dt * 10;
+        } else {
+          if (w.carryItem === 'plank_to_work') {
+            machines.workshop.input += w.carryAmt;
+            w.carryAmt = 0;
+            w.carryItem = null;
+          } else {
+            const key = w.carryItem;
+            const space = Math.max(0, cLim - state.counters[key]);
+            const put = Math.min(w.carryAmt, space);
+            state.counters[key] += put;
+            w.carryAmt -= put;
+            if (w.carryAmt <= 0) w.carryItem = null;
+          }
+        }
+      }
+    } else if (w.role === 'cashier') {
+      w.timer += dt;
+      if (w.timer >= 0.42) {
+        w.timer = 0;
+        if (w.x < -80) processSale('wood', 10, w.x, w.y, false);
+        else if (w.x < 80 && state.unlocks.sawmill) processSale('plank', 32, w.x, w.y, false);
+        else if (state.unlocks.workshop) processSale('furn', 95, w.x, w.y, false);
+      }
+    } else if (w.role === 'hunter' && state.unlocks.restaurant) {
+      if (w.swing > 0) w.swing -= dt * 4;
+      if (w.bag < w.cap) {
+        let best = null, bd = 9999;
+        for (const a of animals) {
+          if (a.respawn > 0) continue;
+          const d = Math.hypot(w.x - a.x, w.y - a.y);
+          if (d < bd) { bd = d; best = a; }
+        }
+        if (best) {
+          if (bd > 44) {
+            const ang = Math.atan2(best.y - w.y, best.x - w.x);
+            w.x += Math.cos(ang) * 135 * dt;
+            w.y += Math.sin(ang) * 135 * dt;
+            w.walk += dt * 9;
+          } else if (w.swing <= 0) {
+            w.swing = 1;
+            best.hp -= 2.5;
+            best.shake = 0.2;
+            if (best.hp <= 0) {
+              best.respawn = 9;
+              w.bag += best.meat;
+            }
+          }
+        }
+      } else {
+        const tx = PADS.grillIn.x, ty = PADS.grillIn.y;
+        const d = Math.hypot(tx - w.x, ty - w.y);
+        if (d > 24) {
+          const ang = Math.atan2(ty - w.y, tx - w.x);
+          w.x += Math.cos(ang) * 145 * dt;
+          w.y += Math.sin(ang) * 145 * dt;
+          w.walk += dt * 9;
+        } else {
+          machines.grill.input += w.bag;
+          w.bag = 0;
+        }
+      }
+    } else if (w.role === 'waiter' && state.unlocks.restaurant) {
+      w.timer += dt;
+      if (w.timer >= 0.42) {
+        w.timer = 0;
+        processSale('steak', 145, w.x, w.y, false);
+      }
+    }
+  });
+
+  // Floaters & Particles
+  for (let i = floaters.length - 1; i >= 0; i--) {
+    floaters[i].y -= 36 * dt;
+    floaters[i].life -= dt * 1.1;
+    if (floaters[i].life <= 0) floaters.splice(i, 1);
+  }
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 180 * dt;
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+
+  updateHUD();
+}
+
+function processSale(item, price, px, py, allowFromPlayerBag) {
+  const cust = customers.find(c => c.item === item && c.state === 'waiting' && c.want > 0);
+  if (!cust) return;
+
+  if (state.counters[item] > 0) {
+    state.counters[item]--;
+  } else if (allowFromPlayerBag && state.bag[item] > 0) {
+    state.bag[item]--;
+  } else {
+    return;
+  }
+
+  cust.want--;
+  state.money += price;
+  addFloater(px, py - 24, `+${price} ₺`, '#4ade80');
+  if (cust.want <= 0) {
+    cust.state = 'leaving';
+  }
+}
+
+// --- RENDERING ---
+function drawOutlinedText(text, x, y, size = 14, color = '#fff') {
+  ctx.font = `800 ${size}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(0,0,0,0.78)';
+  ctx.strokeText(text, x, y);
+  ctx.fillStyle = color;
+  ctx.fillText(text, x, y);
+}
+
+function drawFenceRect(x, y, w, h, gates = []) {
+  ctx.strokeStyle = '#78350f';
+  ctx.lineWidth = 7;
+  ctx.lineCap = 'round';
+  const step = 32;
+
+  for (let px = x; px < x + w; px += step) {
+    const segEnd = Math.min(px + step, x + w);
+    const mid = (px + segEnd) / 2;
+    if (gates.some(g => g.side === 'top' && mid > g.min && mid < g.max)) continue;
+    ctx.beginPath(); ctx.moveTo(px, y); ctx.lineTo(segEnd, y); ctx.stroke();
+    drawFencePost(px, y);
+  }
+  for (let px = x; px < x + w; px += step) {
+    const segEnd = Math.min(px + step, x + w);
+    ctx.beginPath(); ctx.moveTo(px, y + h); ctx.lineTo(segEnd, y + h); ctx.stroke();
+    drawFencePost(px, y + h);
+  }
+  for (let py = y; py < y + h; py += step) {
+    const segEnd = Math.min(py + step, y + h);
+    const mid = (py + segEnd) / 2;
+    if (gates.some(g => g.side === 'left' && mid > g.min && mid < g.max)) continue;
+    ctx.beginPath(); ctx.moveTo(x, py); ctx.lineTo(x, segEnd); ctx.stroke();
+    drawFencePost(x, py);
+  }
+  for (let py = y; py <= y + h; py += step) {
+    if (py < y + h) {
+      const segEnd = Math.min(py + step, y + h);
+      const mid = (py + segEnd) / 2;
+      if (!gates.some(g => g.side === 'right' && mid > g.min && mid < g.max)) {
+        ctx.beginPath(); ctx.moveTo(x + w, py); ctx.lineTo(x + w, segEnd); ctx.stroke();
+      }
+    }
+    drawFencePost(x + w, py);
+  }
+}
+
+function drawFencePost(x, y) {
+  ctx.fillStyle = '#b45309';
+  ctx.beginPath();
+  ctx.arc(x, y, 5.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#451a03';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.strokeStyle = '#78350f';
+  ctx.lineWidth = 7;
+}
+
+function drawCounterShelf(x, y, item, count, maxCount) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  // Wooden shelf table right at the fence edge
+  ctx.fillStyle = '#5c2d16';
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(-28, -14, 56, 26, 7);
+  ctx.fill();
+  ctx.stroke();
+
+  // Visual stacked items on shelf
+  const show = Math.min(count, 10);
+  for (let i = 0; i < show; i++) {
+    const col = i % 5;
+    const row = Math.floor(i / 5);
+    ctx.fillStyle = item === 'wood' ? '#b45309' : item === 'plank' ? '#f59e0b' : item === 'furn' ? '#d97706' : '#dc2626';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(-22 + col * 9, -8 - row * 6, 7, 12, 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Stock limit badge (e.g. 4/6)
+  drawOutlinedText(`${count}/${maxCount}`, 0, -24, 12, count >= maxCount ? '#f87171' : '#fde047');
+
+  ctx.restore();
+}
+
+function drawPad(p) {
+  if (p.req && !state.unlocks[p.req]) return;
+  if (p.type === 'unlock' && state.unlocks[p.key]) return;
+  if (p.machine === 'sawmill' && !state.unlocks.sawmill) return;
+  if (p.machine === 'workshop' && !state.unlocks.workshop) return;
+  if (p.machine === 'grill' && !state.unlocks.restaurant) return;
+
+  const dist = Math.hypot(player.x - p.x, player.y - p.y);
+  const active = dist <= p.r + 12;
+
+  ctx.save();
+  ctx.translate(p.x, p.y);
+
+  ctx.beginPath();
+  ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+  if (p.type === 'unlock') {
+    ctx.fillStyle = active ? 'rgba(250, 204, 21, 0.32)' : 'rgba(250, 204, 21, 0.16)';
+    ctx.strokeStyle = '#facc15';
+  } else if (p.type === 'sell') {
+    ctx.fillStyle = active ? 'rgba(34, 197, 94, 0.32)' : 'rgba(34, 197, 94, 0.16)';
+    ctx.strokeStyle = '#4ade80';
+  } else if (p.type === 'trash') {
+    ctx.fillStyle = active ? 'rgba(239, 68, 68, 0.35)' : 'rgba(239, 68, 68, 0.16)';
+    ctx.strokeStyle = '#f87171';
+  } else {
+    ctx.fillStyle = active ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.12)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+  }
+  ctx.lineWidth = active ? 3.5 : 2.5;
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.font = '22px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(p.icon, 0, p.type === 'trash' ? 0 : -6);
+
+  if (p.type === 'unlock') {
+    drawOutlinedText(`${p.cost} ₺`, 0, 15, 12, '#fde047');
+  } else if (p.type === 'sell') {
+    drawOutlinedText(`${p.price} ₺`, 0, 15, 12, '#86efac');
+  } else if (p.type === 'in') {
+    const cnt = machines[p.machine].input;
+    drawOutlinedText(`${cnt}`, 0, 15, 13, '#fff');
+  } else if (p.type === 'out') {
+    const cnt = machines[p.machine].output;
+    drawOutlinedText(`${cnt}`, 0, 15, 13, '#fde047');
+  }
+
+  ctx.restore();
+}
+
+function drawMachine(x, y, icon, machineKey) {
+  if (machineKey === 'sawmill' && !state.unlocks.sawmill) return;
+  if (machineKey === 'workshop' && !state.unlocks.workshop) return;
+  if (machineKey === 'grill' && !state.unlocks.restaurant) return;
+
+  const m = machines[machineKey];
+  ctx.save();
+  ctx.translate(x, y);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.roundRect(-26, -20, 52, 44, 12);
+  ctx.fill();
+
+  ctx.fillStyle = machineKey === 'grill' ? '#334155' : '#92400e';
+  ctx.strokeStyle = '#f8fafc';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(-24, -24, 48, 44, 12);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.font = '24px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(icon, 0, -2);
+
+  if (m.input > 0) {
+    const pct = m.progress / m.duration;
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(-20, -34, 40, 6);
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(-20, -34, 40 * pct, 6);
+  }
+
+  ctx.restore();
+}
+
+function drawTree(t) {
+  if (t.gold && !state.unlocks.goldForest) return;
+  ctx.save();
+  const sx = t.shake > 0 ? Math.sin(t.shake * 55) * 4 : 0;
+  ctx.translate(t.x + sx, t.y);
+
+  if (t.respawn > 0) {
+    ctx.fillStyle = t.gold ? '#b45309' : '#78350f';
+    ctx.beginPath();
+    ctx.ellipse(0, 4, 11, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    return;
+  }
+
+  ctx.scale(t.scale, t.scale);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(4, 12, 24, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#5c2d16';
+  ctx.fillRect(-6, -12, 12, 22);
+
+  const c1 = t.gold ? '#d97706' : '#15803d';
+  const c2 = t.gold ? '#f59e0b' : '#16a34a';
+  const c3 = t.gold ? '#fde047' : '#22c55e';
+
+  ctx.fillStyle = c1;
+  ctx.beginPath(); ctx.arc(0, -20, 26, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = c2;
+  ctx.beginPath(); ctx.arc(-6, -28, 20, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = c3;
+  ctx.beginPath(); ctx.arc(6, -32, 17, 0, Math.PI * 2); ctx.fill();
+
+  if (t.hp < t.maxHp) {
+    const pct = Math.max(0, t.hp / t.maxHp);
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(-18, -62, 36, 5);
+    ctx.fillStyle = '#fde047';
+    ctx.fillRect(-18, -62, 36 * pct, 5);
+  }
+
+  ctx.restore();
+}
+
+function drawAnimal(a) {
+  if (!state.unlocks.restaurant || a.respawn > 0) return;
+  ctx.save();
+  const sx = a.shake > 0 ? Math.sin(a.shake * 55) * 4 : 0;
+  ctx.translate(a.x + sx, a.y);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath();
+  ctx.ellipse(0, 12, 18, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (a.aggro) {
+    ctx.strokeStyle = 'rgba(239, 68, 68, 0.45)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 22, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.font = '30px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(a.icon, 0, -2);
+
+  if (a.hp < a.maxHp) {
+    const pct = Math.max(0, a.hp / a.maxHp);
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(-18, -26, 36, 5);
+    ctx.fillStyle = a.aggro ? '#ef4444' : '#22c55e';
+    ctx.fillRect(-18, -26, 36 * pct, 5);
+  }
+  ctx.restore();
+}
+
+function drawCharacter(x, y, shirtColor, hat, axeStyle, walkAnim, swingAnim, isPlayer, bagItems = []) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  const bob = Math.abs(Math.sin(walkAnim)) * 4;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0, 14, 15, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const legOff = Math.sin(walkAnim) * 5;
+  ctx.fillStyle = '#1e293b';
+  ctx.beginPath(); ctx.roundRect(-8, 2 + legOff * 0.4, 6, 12, 3); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(2, 2 - legOff * 0.4, 6, 12, 3); ctx.fill();
+
+  ctx.fillStyle = shirtColor;
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(-12, -14 - bob, 24, 20, 7);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#fed7aa';
+  ctx.beginPath();
+  ctx.arc(0, -23 - bob, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  if (hat === 'beanie') {
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath(); ctx.arc(0, -26 - bob, 10.5, Math.PI, 0); ctx.fill();
+  } else if (hat === 'cowboy') {
+    ctx.fillStyle = '#78350f';
+    ctx.beginPath(); ctx.ellipse(0, -30 - bob, 16, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillRect(-8, -37 - bob, 16, 8);
+  } else if (hat === 'crown') {
+    ctx.font = '16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('👑', 0, -36 - bob);
+  }
+
+  ctx.save();
+  ctx.translate(13, -8 - bob);
+  const swingAngle = swingAnim > 0 ? Math.sin(swingAnim * Math.PI) * 1.6 : 0.2;
+  ctx.rotate(swingAngle);
+  ctx.fillStyle = '#78350f';
+  ctx.fillRect(-2, -16, 4, 20);
+  ctx.fillStyle = axeStyle === 'gold' ? '#facc15' : axeStyle === 'laser' ? '#38bdf8' : '#cbd5e1';
+  ctx.beginPath();
+  ctx.moveTo(0, -16);
+  ctx.lineTo(10, -19);
+  ctx.lineTo(10, -10);
+  ctx.lineTo(0, -12);
+  ctx.fill();
+  ctx.restore();
+
+  if (bagItems.length > 0) {
+    const show = Math.min(bagItems.length, 8);
+    for (let i = 0; i < show; i++) {
+      const it = bagItems[i];
+      ctx.fillStyle = it === 'wood' ? '#92400e' : it === 'plank' ? '#f59e0b' : it === 'furn' ? '#d97706' : it === 'rawMeat' ? '#ef4444' : '#7f1d1d';
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.roundRect(-16, -14 - i * 4.5 - bob, 10, 4.5, 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.translate(W / 2 - player.x, H / 2 - player.y);
+
+  // --- GROUND BIOMES ---
+  ctx.fillStyle = '#2d4a2b';
+  ctx.fillRect(-700, -1000, 2100, 1650);
+
+  if (state.unlocks.goldForest) {
+    ctx.fillStyle = '#3f4726';
+    ctx.beginPath();
+    ctx.roundRect(175, -830, 360, 580, 28);
+    ctx.fill();
+  }
+
+  if (state.unlocks.restaurant) {
+    ctx.fillStyle = '#475569';
+    ctx.beginPath();
+    ctx.roundRect(545, -880, 680, 640, 32);
+    ctx.fill();
+    ctx.fillStyle = '#334155';
+    ctx.beginPath(); ctx.arc(680, -450, 45, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(980, -640, 60, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Customer Street (Bottom)
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(-700, 225, 2100, 320);
+  ctx.fillStyle = '#64748b';
+  ctx.fillRect(-700, 220, 2100, 18);
+
+  // Lumber Camp Floor
+  ctx.fillStyle = '#78553a';
+  ctx.beginPath();
+  ctx.roundRect(-280, -220, 560, 440, 18);
+  ctx.fill();
+
+  // Restaurant Floor
+  if (state.unlocks.restaurant) {
+    ctx.fillStyle = '#5c4033';
+    ctx.beginPath();
+    ctx.roundRect(340, -220, 500, 440, 18);
+    ctx.fill();
+  }
+
+  // --- FENCES ---
+  const lumberGates = [{ side: 'top', min: -62, max: 62 }];
+  if (state.unlocks.restaurant) lumberGates.push({ side: 'right', min: -55, max: 75 });
+  drawFenceRect(-280, -220, 560, 440, lumberGates);
+
+  if (state.unlocks.restaurant) {
+    drawFenceRect(340, -220, 500, 440, [
+      { side: 'left', min: -55, max: 75 },
+      { side: 'top', min: 640, max: 770 }
+    ]);
+  }
+
+  // --- PADS, SHELVES & MACHINES ---
+  for (const k in PADS) drawPad(PADS[k]);
+
+  const cLim = getCounterLimit();
+  drawCounterShelf(-165, 204, 'wood', state.counters.wood, cLim);
+  if (state.unlocks.sawmill) drawCounterShelf(0, 204, 'plank', state.counters.plank, cLim);
+  if (state.unlocks.workshop) drawCounterShelf(165, 204, 'furn', state.counters.furn, cLim);
+  if (state.unlocks.restaurant) drawCounterShelf(590, 204, 'steak', state.counters.steak, cLim);
+
+  drawMachine(-122, -35, '🪚', 'sawmill');
+  drawMachine(122, -35, '🪑', 'workshop');
+  drawMachine(492, -45, '🔥', 'grill');
+
+  // Ground dropped items
+  groundItems.forEach(gi => {
+    const yOff = Math.sin(gi.bob) * 3;
+    ctx.font = '20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const ic = gi.item === 'wood' ? '🪵' : gi.item === 'plank' ? '🪚' : gi.item === 'furn' ? '🪑' : '🥩';
+    ctx.fillText(ic, gi.x, gi.y + yOff);
+  });
+
+  // --- ENTITIES (Y-Sorted) ---
+  const renderList = [];
+
+  trees.forEach(t => renderList.push({ y: t.y, fn: () => drawTree(t) }));
+  animals.forEach(a => renderList.push({ y: a.y, fn: () => drawAnimal(a) }));
+
+  customers.forEach(c => {
+    renderList.push({
+      y: c.y,
+      fn: () => {
+        drawCharacter(c.x, c.y, c.color, 'none', 'none', c.walk, 0, false);
+        if (c.state !== 'leaving') {
+          const ic = c.item === 'wood' ? '🪵' : c.item === 'plank' ? '🪚' : c.item === 'furn' ? '🪑' : '🍖';
+          drawOutlinedText(`${ic}×${c.want}`, c.x, c.y - 44, 13, '#fff');
+        }
+      }
+    });
+  });
+
+  workers.forEach(w => {
+    renderList.push({
+      y: w.y,
+      fn: () => {
+        const shirt = w.role === 'lumberjack' ? '#f59e0b' : w.role === 'carrier' ? '#a855f7' : w.role === 'cashier' ? '#3b82f6' : w.role === 'hunter' ? '#10b981' : '#e11d48';
+        const hat = w.role === 'hunter' ? 'cowboy' : 'beanie';
+        let stack = [];
+        if (w.role === 'lumberjack') stack = Array(w.bag || 0).fill('wood');
+        else if (w.role === 'hunter') stack = Array(w.bag || 0).fill('rawMeat');
+        else if (w.role === 'carrier' && w.carryAmt > 0) {
+          const t = w.carryItem === 'plank_to_work' ? 'plank' : w.carryItem;
+          stack = Array(w.carryAmt).fill(t);
+        }
+        drawCharacter(w.x, w.y, shirt, hat, w.role === 'carrier' ? 'none' : 'steel', w.walk || 0, w.swing || 0, false, stack);
+      }
+    });
+  });
+
+  const pStack = [];
+  for (let i = 0; i < state.bag.wood; i++) pStack.push('wood');
+  for (let i = 0; i < state.bag.plank; i++) pStack.push('plank');
+  for (let i = 0; i < state.bag.furn; i++) pStack.push('furn');
+  for (let i = 0; i < state.bag.rawMeat; i++) pStack.push('rawMeat');
+  for (let i = 0; i < state.bag.steak; i++) pStack.push('steak');
+
+  renderList.push({
+    y: player.y,
+    fn: () => {
+      drawCharacter(player.x, player.y, state.style.shirt, state.style.hat, state.style.axeStyle, player.walkAnim, player.swingAnim, true, pStack);
+    }
+  });
+
+  renderList.sort((a, b) => a.y - b.y);
+  renderList.forEach(r => r.fn());
+
+  particles.forEach(p => {
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  floaters.forEach(f => {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, f.life);
+    drawOutlinedText(f.text, f.x, f.y, 15, f.color);
+    ctx.restore();
+  });
+
+  ctx.restore();
+
+  if (joy.active) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(joy.startX, joy.startY, 50, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.arc(joy.startX + joy.dx * 50, joy.startY + joy.dy * 50, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function loop(now) {
+  const dt = Math.min((now - lastTime) / 1000, 0.05);
+  lastTime = now;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+
+updateHUD();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
