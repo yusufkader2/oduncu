@@ -1,0 +1,2224 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Oduncu & Et İmparatorluğu - Çok Bölümlü</title>
+<style>
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #141d16;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  /* Stabilized Top HUD */
+  #hud {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: none;
+    z-index: 10;
+    gap: 8px;
+  }
+  .hud-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+  .pill {
+    background: rgba(16, 22, 18, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(255, 255, 255, 0.14);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 13px;
+    font-weight: 700;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .pill span.num {
+    display: inline-block;
+    min-width: 18px;
+    text-align: right;
+  }
+  .pill.money {
+    border-color: rgba(250, 204, 21, 0.45);
+    color: #fde047;
+    font-size: 14px;
+  }
+  .pill.money span.num {
+    min-width: 34px;
+  }
+  .pill.chapter {
+    border-color: rgba(56, 189, 248, 0.45);
+    color: #bae6fd;
+  }
+  .btn-upgrade {
+    pointer-events: auto;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border: 1.5px solid #fde68a;
+    color: #fff;
+    padding: 7px 13px;
+    border-radius: 13px;
+    font-weight: 800;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 5px 16px rgba(217, 119, 6, 0.4);
+    transition: transform 0.12s;
+    white-space: nowrap;
+  }
+  .btn-upgrade:active {
+    transform: scale(0.94);
+  }
+  .hp-wrap {
+    width: 52px;
+    height: 7px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .hp-fill {
+    height: 100%;
+    background: #22c55e;
+    width: 100%;
+    transition: width 0.15s, background 0.2s;
+  }
+
+  /* Modal */
+  #modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.68);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+    padding: 16px;
+  }
+  #modalOverlay.open {
+    display: flex;
+  }
+  .modal-card {
+    background: #18201a;
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border-radius: 22px;
+    width: 100%;
+    max-width: 450px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 24px 50px rgba(0,0,0,0.65);
+    color: #f8fafc;
+  }
+  .modal-header {
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .modal-title {
+    font-size: 16px;
+    font-weight: 800;
+  }
+  .close-btn {
+    background: rgba(255,255,255,0.12);
+    border: none;
+    color: #fff;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .tabs {
+    display: flex;
+    padding: 8px 10px 0;
+    gap: 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 9px 4px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #94a3b8;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .tab-btn.active {
+    color: #fbbf24;
+    border-bottom-color: #fbbf24;
+  }
+  .modal-body {
+    padding: 14px 16px 20px;
+    overflow-y: auto;
+    touch-action: pan-y;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .upg-item {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 11px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .upg-info {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+  .upg-icon {
+    font-size: 22px;
+    width: 38px;
+    height: 38px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .upg-name {
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .upg-lvl {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+  .buy-btn {
+    background: #22c55e;
+    color: #052e16;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-weight: 800;
+    font-size: 13px;
+    cursor: pointer;
+    min-width: 84px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .buy-btn:disabled {
+    background: rgba(255,255,255,0.1);
+    color: #64748b;
+    cursor: not-allowed;
+  }
+  .transfer-card {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+    border: 1.5px solid rgba(250, 204, 21, 0.35);
+    border-radius: 16px;
+    padding: 14px;
+  }
+  .transfer-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #fde047;
+    margin-bottom: 4px;
+  }
+  .transfer-desc {
+    font-size: 12.5px;
+    color: #cbd5e1;
+    line-height: 1.45;
+    margin-bottom: 10px;
+  }
+  .req-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+    font-size: 12.5px;
+  }
+  .req-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: rgba(0,0,0,0.28);
+    border-radius: 8px;
+  }
+  .transfer-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #f59e0b, #ea580c);
+    color: #fff;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(234, 88, 12, 0.35);
+  }
+  .transfer-btn:disabled {
+    background: rgba(255,255,255,0.1);
+    color: #64748b;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+  .custom-section { margin-bottom: 8px; }
+  .custom-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .swatch-btn {
+    background: rgba(255,255,255,0.06);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 10px 6px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .swatch-btn.selected {
+    border-color: #fbbf24;
+    background: rgba(251, 191, 36, 0.14);
+  }
+  .color-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.4);
+  }
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <div class="hud-group">
+    <div class="pill chapter" id="chapterPill">🌲 B1: Yeşil Vadi</div>
+    <div class="pill money">💰 <span class="num" id="moneyVal">0</span> ₺</div>
+    <div class="pill">⭐ <span class="num" id="starsVal">0</span> (×<span id="multVal">1.0</span>)</div>
+    <div class="pill">🎒 <span class="num" id="bagTotalVal">0</span>/<span class="num" id="capVal">6</span></div>
+    <div class="pill">🪵 <span class="num" id="woodVal">0</span></div>
+    <div class="pill" id="plankPill" style="display:none">🪚 <span class="num" id="plankVal">0</span></div>
+    <div class="pill" id="furnPill" style="display:none">🪑 <span class="num" id="furnVal">0</span></div>
+    <div class="pill" id="meatPill" style="display:none">🥩 <span class="num" id="rawMeatVal">0</span> | 🍖 <span class="num" id="steakVal">0</span></div>
+    <div class="pill">❤️ <div class="hp-wrap"><div class="hp-fill" id="hpFill"></div></div></div>
+  </div>
+  <div class="hud-group">
+    <button class="btn-upgrade" id="openModalBtn">⚡ Geliştir</button>
+  </div>
+</div>
+
+<canvas id="game"></canvas>
+
+<div id="modalOverlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">⚙️ Kamp & Karakter</div>
+      <button class="close-btn" id="closeModalBtn">✕</button>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="upgrades">⚡ Geliştir</button>
+      <button class="tab-btn" data-tab="workers">👷 Personel</button>
+      <button class="tab-btn" data-tab="transfer">🚀 Bölümler</button>
+      <button class="tab-btn" data-tab="style">🎨 Görünüm</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+let W = window.innerWidth, H = window.innerHeight, DPR = Math.min(window.devicePixelRatio || 1, 2);
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// --- CHAPTER DEFINITIONS (4 Distinct Regions!) ---
+const CHAPTERS = [
+  {
+    id: 0,
+    badge: '🌲 B1: Yeşil Vadi',
+    name: '1. Bölüm: Yeşil Vadi Kampı',
+    subtitle: 'Başlangıç ormanı ve ilk kasaba restoranı',
+    groundBg: '#2d4a2b',
+    goldGround: '#3f4726',
+    campFloor: '#78553a',
+    restFloor: '#5c4033',
+    mountainBg: '#475569',
+    treePalette: ['#15803d', '#16a34a', '#22c55e'],
+    goldTreePalette: ['#d97706', '#f59e0b', '#fde047'],
+    treeHpMult: 1.0,
+    animalHpMult: 1.0,
+    costScale: 1.0,
+    incomeScale: 1.0,
+    reqMoney: 4500,
+    rewardStars: 2
+  },
+  {
+    id: 1,
+    badge: '🍂 B2: Kızıl Kanyon',
+    name: '2. Bölüm: Kızıl Kanyon Tesisleri',
+    subtitle: 'Sert kızılçam kerestesi ve kanyon biftek evi',
+    groundBg: '#5c2d1e',
+    goldGround: '#78350f',
+    campFloor: '#6b3e26',
+    restFloor: '#4a2511',
+    mountainBg: '#57534e',
+    treePalette: ['#9a3412', '#c2410c', '#ea580c'],
+    goldTreePalette: ['#ca8a04', '#eab308', '#fef08a'],
+    treeHpMult: 1.45,
+    animalHpMult: 1.4,
+    costScale: 1.4,
+    incomeScale: 1.5,
+    reqMoney: 12000,
+    rewardStars: 4
+  },
+  {
+    id: 2,
+    badge: '❄️ B3: Buzul Zirvesi',
+    name: '3. Bölüm: Buzul Zirvesi Kampı',
+    subtitle: 'Kadim ladin ormanı ve karlı dağ avcılığı',
+    groundBg: '#334155',
+    goldGround: '#1e3a5f',
+    campFloor: '#5b4636',
+    restFloor: '#3e2c23',
+    mountainBg: '#64748b',
+    treePalette: ['#0f766e', '#0d9488', '#5eead4'],
+    goldTreePalette: ['#0284c7', '#38bdf8', '#bae6fd'],
+    treeHpMult: 2.0,
+    animalHpMult: 1.9,
+    costScale: 1.9,
+    incomeScale: 2.2,
+    reqMoney: 30000,
+    rewardStars: 7
+  },
+  {
+    id: 3,
+    badge: '🌋 B4: Volkanik Vaha',
+    name: '4. Bölüm: Volkanik İmparatorluk',
+    subtitle: 'Efsanevi abanoz ağaçları ve kraliyet ziyafeti',
+    groundBg: '#27272a',
+    goldGround: '#451a03',
+    campFloor: '#44403c',
+    restFloor: '#292524',
+    mountainBg: '#3f3f46',
+    treePalette: ['#3f6212', '#4d7c0f', '#84cc16'],
+    goldTreePalette: ['#b91c1c', '#ef4444', '#fca5a5'],
+    treeHpMult: 2.7,
+    animalHpMult: 2.5,
+    costScale: 2.5,
+    incomeScale: 3.2,
+    reqMoney: 75000,
+    rewardStars: 12
+  }
+];
+
+function getChap() {
+  return CHAPTERS[Math.min(state.chapter, CHAPTERS.length - 1)];
+}
+
+// --- GAME STATE ---
+const DEFAULT_STATE = {
+  chapter: 0,
+  stars: 0,
+  completedChapters: [],
+  money: 0,
+  bag: { wood: 0, plank: 0, furn: 0, rawMeat: 0, steak: 0 },
+  counters: { wood: 0, plank: 0, furn: 0, steak: 0 },
+  upgrades: {
+    axe: 1,
+    bag: 1,
+    speed: 1,
+    armor: 1,
+    counterCap: 1,
+    lumberjack: 0,
+    carrier: 0,
+    cashier: 0,
+    hunter: 0,
+    waiter: 0
+  },
+  unlocks: {
+    sawmill: false,
+    workshop: false,
+    goldForest: false,
+    restaurant: false
+  },
+  style: {
+    shirt: '#dc2626',
+    hat: 'none',
+    axeStyle: 'steel'
+  }
+};
+
+let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+// Load saved progress from localStorage if available
+const SAVE_KEY = 'oduncu_et_imparatorlugu_save_v1';
+function saveGame() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+  } catch (e) {}
+}
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      state = {
+        ...JSON.parse(JSON.stringify(DEFAULT_STATE)),
+        ...parsed,
+        bag: { ...DEFAULT_STATE.bag, ...(parsed.bag || {}) },
+        counters: { ...DEFAULT_STATE.counters, ...(parsed.counters || {}) },
+        upgrades: { ...DEFAULT_STATE.upgrades, ...(parsed.upgrades || {}) },
+        unlocks: { ...DEFAULT_STATE.unlocks, ...(parsed.unlocks || {}) },
+        style: { ...DEFAULT_STATE.style, ...(parsed.style || {}) }
+      };
+    }
+  } catch (e) {}
+}
+loadGame();
+
+const BASE_COSTS = {
+  sawmill: 180,
+  workshop: 750,
+  goldForest: 1400,
+  restaurant: 2400
+};
+
+function getPadCost(key) {
+  return Math.round(BASE_COSTS[key] * getChap().costScale);
+}
+
+function getPrestigeMult() {
+  return 1 + state.stars * 0.25; // Each star gives +25% permanent income!
+}
+
+function getSellPrice(basePrice) {
+  return Math.round(basePrice * getChap().incomeScale * getPrestigeMult());
+}
+
+const UPGRADE_DEFS = [
+  { id: 'axe', tab: 'upgrades', icon: '🪓', name: 'Balta & Av Gücü', base: 45, mult: 1.55, max: 15 },
+  { id: 'bag', tab: 'upgrades', icon: '🎒', name: 'Sırt Çantası (+4)', base: 40, mult: 1.5, max: 15 },
+  { id: 'counterCap', tab: 'upgrades', icon: '📦', name: 'Tezgah Raf Limiti (+3)', base: 70, mult: 1.6, max: 10 },
+  { id: 'speed', tab: 'upgrades', icon: '🥾', name: 'Hareket Hızı', base: 55, mult: 1.6, max: 10 },
+  { id: 'armor', tab: 'upgrades', icon: '🛡️', name: 'Avcı Zırhı & Can', base: 160, mult: 1.65, max: 10 },
+  { id: 'lumberjack', tab: 'workers', icon: '👷', name: 'Yardımcı Oduncu', base: 95, mult: 1.75, max: 5 },
+  { id: 'carrier', tab: 'workers', icon: '🚚', name: 'Taşıyıcı İşçi', base: 115, mult: 1.8, max: 4 },
+  { id: 'cashier', tab: 'workers', icon: '🧑‍💼', name: 'Kereste Kasiyeri', base: 130, mult: 1.85, max: 3 },
+  { id: 'hunter', tab: 'workers', icon: '🏹', name: 'Dağ Avcısı', base: 420, mult: 1.85, max: 3, req: 'restaurant' },
+  { id: 'waiter', tab: 'workers', icon: '👨‍🍳', name: 'Restoran Garsonu', base: 480, mult: 1.9, max: 2, req: 'restaurant' }
+];
+
+function getUpgradeCost(def) {
+  const lvl = state.upgrades[def.id];
+  const raw = def.base * Math.pow(def.mult, lvl - (def.tab === 'upgrades' ? 1 : 0));
+  return Math.floor(raw * getChap().costScale);
+}
+
+function getMaxBag() { return 6 + (state.upgrades.bag - 1) * 4; }
+function getTotalBag() {
+  const b = state.bag;
+  return b.wood + b.plank + b.furn + b.rawMeat + b.steak;
+}
+function getCounterLimit() { return 6 + (state.upgrades.counterCap - 1) * 3; }
+function getPlayerMaxHp() { return 100 + (state.upgrades.armor - 1) * 35; }
+function getAttackPower() { return (1 + (state.upgrades.axe - 1) * 0.85) * (1 + state.stars * 0.1); }
+function getMoveSpeed() { return 215 + (state.upgrades.speed - 1) * 20; }
+
+// --- WORLD & SMOOTH CAMERA ---
+const player = {
+  x: 0,
+  y: 40,
+  facing: 1,
+  walkAnim: 0,
+  swingAnim: 0,
+  hp: getPlayerMaxHp(),
+  hurtTimer: 0,
+  hitCooldown: 0
+};
+const cam = { x: 0, y: 40 };
+
+// --- UNIFIED COLLISION & FENCE SYSTEM ---
+const FENCE_SEGMENTS = [
+  { x1: -280, y1: -220, x2: -65,  y2: -220 },
+  { x1: 65,   y1: -220, x2: 280,  y2: -220 },
+  { x1: -280, y1: 220,  x2: 280,  y2: 220 },
+  { x1: -280, y1: -220, x2: -280, y2: 220 },
+  { x1: 280,  y1: -220, x2: 280,  y2: -60 },
+  { x1: 280,  y1: 70,   x2: 280,  y2: 220 },
+  { x1: 280,  y1: -60,  x2: 280,  y2: 70, lockKey: 'restaurant' },
+
+  { x1: 340,  y1: -220, x2: 340,  y2: -60,  req: 'restaurant' },
+  { x1: 340,  y1: 70,   x2: 340,  y2: 220,  req: 'restaurant' },
+  { x1: 280,  y1: -60,  x2: 340,  y2: -60,  req: 'restaurant' },
+  { x1: 280,  y1: 70,   x2: 340,  y2: 70,   req: 'restaurant' },
+  { x1: 340,  y1: -220, x2: 530,  y2: -220, req: 'restaurant' },
+  { x1: 670,  y1: -220, x2: 840,  y2: -220, req: 'restaurant' },
+  { x1: 840,  y1: -220, x2: 840,  y2: 220,  req: 'restaurant' },
+  { x1: 340,  y1: 220,  x2: 840,  y2: 220,  req: 'restaurant' },
+  { x1: 495,  y1: -880, x2: 495,  y2: -220, req: 'restaurant' }
+];
+
+function circleSegmentResolve(ent, radius, x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const lenSq = dx * dx + dy * dy;
+  let t = 0;
+  if (lenSq > 0) {
+    t = Math.max(0, Math.min(1, ((ent.x - x1) * dx + (ent.y - y1) * dy) / lenSq));
+  }
+  const cx = x1 + t * dx;
+  const cy = y1 + t * dy;
+  const distX = ent.x - cx;
+  const distY = ent.y - cy;
+  const dist = Math.hypot(distX, distY);
+  if (dist < radius && dist > 0.0001) {
+    const push = radius - dist;
+    ent.x += (distX / dist) * push;
+    ent.y += (distY / dist) * push;
+  }
+}
+
+function resolveEntityBounds(ent, radius = 15) {
+  const minX = -530;
+  const maxX = state.unlocks.restaurant ? 1190 : 460;
+  const minY = state.unlocks.restaurant ? -870 : -830;
+  const maxY = 205;
+
+  ent.x = Math.max(minX, Math.min(maxX, ent.x));
+  ent.y = Math.max(minY, Math.min(maxY, ent.y));
+
+  for (const seg of FENCE_SEGMENTS) {
+    if (seg.req && !state.unlocks[seg.req]) continue;
+    if (seg.lockKey && state.unlocks[seg.lockKey]) continue;
+    circleSegmentResolve(ent, radius, seg.x1, seg.y1, seg.x2, seg.y2);
+  }
+}
+
+function moveWorkerTowards(w, tx, ty, speed, dt) {
+  let goalX = tx, goalY = ty;
+
+  if (w.y > -215 && w.x < 310 && ty < -225) {
+    if (Math.abs(w.x) > 42) { goalX = 0; goalY = -195; }
+    else { goalX = 0; goalY = -245; }
+  } else if (w.y < -225 && w.x < 495 && ty > -215) {
+    if (Math.abs(w.x) > 42) { goalX = 0; goalY = -245; }
+    else { goalX = 0; goalY = -195; }
+  } else if (w.y > -215 && w.x >= 340 && ty < -225) {
+    if (w.x < 550 || w.x > 650) { goalX = 600; goalY = -195; }
+    else { goalX = 600; goalY = -245; }
+  } else if (w.y < -225 && w.x >= 495 && ty > -215) {
+    if (w.x < 550 || w.x > 650) { goalX = 600; goalY = -245; }
+    else { goalX = 600; goalY = -195; }
+  }
+
+  const dx = goalX - w.x;
+  const dy = goalY - w.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist > 2) {
+    w.x += (dx / dist) * speed * dt;
+    w.y += (dy / dist) * speed * dt;
+    w.walk = (w.walk || 0) + dt * 9.5;
+    if (Math.abs(dx) > 1) w.facing = dx > 0 ? 1 : -1;
+  }
+  resolveEntityBounds(w, 14);
+}
+
+// Facilities & Pads
+const PADS = {
+  sellWood:   { x: -165, y: 155, r: 34, type: 'sell', item: 'wood', basePrice: 10, icon: '🪵' },
+  sellPlank:  { x: 0,    y: 155, r: 34, type: 'sell', item: 'plank', basePrice: 32, icon: '🪚', req: 'sawmill' },
+  sellFurn:   { x: 165,  y: 155, r: 34, type: 'sell', item: 'furn', basePrice: 95, icon: '🪑', req: 'workshop' },
+
+  trashCamp:  { x: -245, y: 185, r: 26, type: 'trash', icon: '🗑️' },
+  trashRest:  { x: 375,  y: 185, r: 26, type: 'trash', icon: '🗑️', req: 'restaurant' },
+
+  sawmillIn:  { x: -180, y: -35, r: 34, type: 'in', machine: 'sawmill', icon: '🪵' },
+  sawmillOut: { x: -65,  y: -35, r: 34, type: 'out', machine: 'sawmill', icon: '🪚' },
+  workIn:     { x: 65,   y: -35, r: 34, type: 'in', machine: 'workshop', icon: '🪚' },
+  workOut:    { x: 180,  y: -35, r: 34, type: 'out', machine: 'workshop', icon: '🪑' },
+
+  unlockSawmill:    { x: -120, y: -35, r: 42, type: 'unlock', key: 'sawmill', icon: '🪚' },
+  unlockWorkshop:   { x: 125,  y: -35, r: 42, type: 'unlock', key: 'workshop', icon: '🪑' },
+  unlockGoldForest: { x: 240,  y: -275, r: 42, type: 'unlock', key: 'goldForest', icon: '🌲' },
+  unlockRestaurant: { x: 245,  y: 5,    r: 42, type: 'unlock', key: 'restaurant', icon: '🍖' },
+
+  grillIn:    { x: 430, y: -45, r: 34, type: 'in', machine: 'grill', icon: '🥩' },
+  grillOut:   { x: 555, y: -45, r: 34, type: 'out', machine: 'grill', icon: '🍖' },
+  sellSteak:  { x: 590, y: 155, r: 38, type: 'sell', item: 'steak', basePrice: 145, icon: '🍖', req: 'restaurant' }
+};
+
+const machines = {
+  sawmill:  { input: 0, output: 0, progress: 0, duration: 1.6 },
+  workshop: { input: 0, output: 0, progress: 0, duration: 2.2 },
+  grill:    { input: 0, output: 0, progress: 0, duration: 2.0 }
+};
+
+const groundItems = [];
+function spawnGroundItem(x, y, item, amount = 1) {
+  for (let i = 0; i < amount; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const r = 14 + Math.random() * 18;
+    groundItems.push({
+      x: x + Math.cos(a) * r,
+      y: y + Math.sin(a) * r,
+      item,
+      bob: Math.random() * Math.PI * 2
+    });
+  }
+}
+
+const trees = [];
+function initTrees() {
+  trees.length = 0;
+  const hpMult = getChap().treeHpMult;
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 6; col++) {
+      const x = -460 + col * 105 + (row % 2) * 30;
+      const y = -340 - row * 115;
+      const hp = Math.round(4 * hpMult);
+      trees.push({
+        x, y,
+        gold: false,
+        hp,
+        maxHp: hp,
+        respawn: 0,
+        shake: 0,
+        scale: 0.92 + Math.random() * 0.16
+      });
+    }
+  }
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 3; col++) {
+      const x = 210 + col * 100 + (row % 2) * 20;
+      const y = -340 - row * 115;
+      const hp = Math.round(9 * hpMult);
+      trees.push({
+        x, y,
+        gold: true,
+        hp,
+        maxHp: hp,
+        respawn: 0,
+        shake: 0,
+        scale: 1.05
+      });
+    }
+  }
+}
+
+const ANIMAL_TYPES = [
+  { type: 'deer', icon: '🦌', hp: 6, speed: 135, aggro: false, dmg: 0, meat: 2 },
+  { type: 'boar', icon: '🐗', hp: 11, speed: 120, aggro: true, dmg: 14, meat: 3 },
+  { type: 'wolf', icon: '🐺', hp: 15, speed: 150, aggro: true, dmg: 20, meat: 4 },
+  { type: 'bear', icon: '🐻', hp: 26, speed: 105, aggro: true, dmg: 30, meat: 6 }
+];
+const animals = [];
+function initAnimals() {
+  animals.length = 0;
+  const hpMult = getChap().animalHpMult;
+  const spots = [
+    { x: 600, y: -360, t: 0 }, { x: 800, y: -380, t: 0 }, { x: 1010, y: -350, t: 1 },
+    { x: 650, y: -530, t: 1 }, { x: 890, y: -540, t: 2 }, { x: 1090, y: -520, t: 0 },
+    { x: 700, y: -720, t: 2 }, { x: 940, y: -740, t: 3 }, { x: 1110, y: -700, t: 3 }
+  ];
+  spots.forEach(s => {
+    const def = ANIMAL_TYPES[s.t];
+    const hp = Math.round(def.hp * hpMult);
+    animals.push({
+      ...def,
+      hp,
+      maxHp: hp,
+      dmg: Math.round(def.dmg * (1 + state.chapter * 0.2)),
+      homeX: s.x,
+      homeY: s.y,
+      x: s.x,
+      y: s.y,
+      respawn: 0,
+      atkTimer: 0,
+      wanderAngle: Math.random() * Math.PI * 2,
+      wanderTimer: 1 + Math.random() * 2,
+      shake: 0
+    });
+  });
+}
+
+const customers = [];
+let custSpawnTimer = 0;
+
+function spawnCustomer() {
+  const stalls = ['wood'];
+  if (state.unlocks.sawmill) stalls.push('plank');
+  if (state.unlocks.workshop) stalls.push('furn');
+  if (state.unlocks.restaurant) stalls.push('steak', 'steak');
+
+  const item = stalls[Math.floor(Math.random() * stalls.length)];
+  const countInQueue = customers.filter(c => c.item === item).length;
+  if (countInQueue >= 3) return;
+
+  let targetX = -165;
+  if (item === 'plank') targetX = 0;
+  if (item === 'furn') targetX = 165;
+  if (item === 'steak') targetX = 590;
+
+  const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f97316', '#06b6d4'];
+  customers.push({
+    item,
+    want: 1 + Math.floor(Math.random() * 3),
+    x: targetX + (Math.random() * 140 - 70),
+    y: 440,
+    targetX,
+    state: 'arriving',
+    color: colors[Math.floor(Math.random() * colors.length)],
+    walk: 0
+  });
+}
+
+const workers = [];
+function syncWorkers() {
+  workers.length = 0;
+  for (let i = 0; i < state.upgrades.lumberjack; i++) {
+    workers.push({ role: 'lumberjack', x: -120 + i * 55, y: -160, bag: 0, cap: 5, swing: 0, walk: 0, facing: 1 });
+  }
+  for (let i = 0; i < state.upgrades.carrier; i++) {
+    workers.push({ role: 'carrier', x: -90 + i * 55, y: 20, carryItem: null, carryAmt: 0, cap: 4, walk: 0, facing: 1 });
+  }
+  for (let i = 0; i < state.upgrades.cashier; i++) {
+    const xs = [-165, 0, 165];
+    workers.push({ role: 'cashier', x: xs[i], y: 155, timer: 0, facing: 1 });
+  }
+  for (let i = 0; i < state.upgrades.hunter; i++) {
+    workers.push({ role: 'hunter', x: 580 + i * 35, y: -160, bag: 0, cap: 6, swing: 0, walk: 0, facing: 1 });
+  }
+  for (let i = 0; i < state.upgrades.waiter; i++) {
+    workers.push({ role: 'waiter', x: 590 + i * 35, y: 155, timer: 0, facing: 1 });
+  }
+}
+
+initTrees();
+initAnimals();
+syncWorkers();
+
+// --- CHAPTER HANDOVER (KAMP DEVRETME) ---
+function canTransferChapter() {
+  const chap = getChap();
+  return state.unlocks.sawmill &&
+         state.unlocks.workshop &&
+         state.unlocks.goldForest &&
+         state.unlocks.restaurant &&
+         state.money >= chap.reqMoney;
+}
+
+function transferToNextChapter() {
+  if (!canTransferChapter()) return;
+  const chap = getChap();
+  const earnedStars = chap.rewardStars;
+  const nextChapIdx = Math.min(state.chapter + 1, CHAPTERS.length - 1);
+
+  if (!state.completedChapters.includes(state.chapter)) {
+    state.completedChapters.push(state.chapter);
+  }
+
+  state.stars += earnedStars;
+  state.chapter = nextChapIdx;
+  state.money = 0;
+  state.bag = { wood: 0, plank: 0, furn: 0, rawMeat: 0, steak: 0 };
+  state.counters = { wood: 0, plank: 0, furn: 0, steak: 0 };
+  state.upgrades = {
+    axe: 1,
+    bag: 1,
+    speed: 1,
+    armor: 1,
+    counterCap: 1,
+    lumberjack: 0,
+    carrier: 0,
+    cashier: 0,
+    hunter: 0,
+    waiter: 0
+  };
+  state.unlocks = {
+    sawmill: false,
+    workshop: false,
+    goldForest: false,
+    restaurant: false
+  };
+
+  machines.sawmill = { input: 0, output: 0, progress: 0, duration: 1.6 };
+  machines.workshop = { input: 0, output: 0, progress: 0, duration: 2.2 };
+  machines.grill = { input: 0, output: 0, progress: 0, duration: 2.0 };
+  groundItems.length = 0;
+  customers.length = 0;
+
+  player.x = 0;
+  player.y = 40;
+  player.hp = getPlayerMaxHp();
+  cam.x = 0;
+  cam.y = 40;
+
+  initTrees();
+  initAnimals();
+  syncWorkers();
+  saveGame();
+  updateHUD();
+  modalOverlay.classList.remove('open');
+
+  addParticles(0, 40, '#fde047', 26);
+  addFloater(0, 0, `🚀 ${getChap().name}! (+${earnedStars} ⭐)`, '#fde047');
+}
+
+// Floating Texts & Particles
+const floaters = [];
+const particles = [];
+function addFloater(x, y, text, color = '#fde047') {
+  floaters.push({ x, y, text, color, life: 1.1 });
+}
+function addParticles(x, y, color, count = 6) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const sp = 45 + Math.random() * 90;
+    particles.push({
+      x, y,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp - 30,
+      color,
+      life: 0.45 + Math.random() * 0.25,
+      size: 3 + Math.random() * 3
+    });
+  }
+}
+
+// --- CONTROLS ---
+const joy = { active: false, startX: 0, startY: 0, curX: 0, curY: 0, dx: 0, dy: 0 };
+const keys = {};
+window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+let pointerDownTime = 0;
+let pointerDownPos = { x: 0, y: 0 };
+
+canvas.addEventListener('pointerdown', e => {
+  if (document.getElementById('modalOverlay').classList.contains('open')) return;
+  pointerDownTime = performance.now();
+  pointerDownPos = { x: e.clientX, y: e.clientY };
+  joy.active = true;
+  joy.startX = e.clientX;
+  joy.startY = e.clientY;
+  joy.curX = e.clientX;
+  joy.curY = e.clientY;
+  joy.dx = 0;
+  joy.dy = 0;
+});
+
+window.addEventListener('pointermove', e => {
+  if (!joy.active) return;
+  joy.curX = e.clientX;
+  joy.curY = e.clientY;
+  const rx = joy.curX - joy.startX;
+  const ry = joy.curY - joy.startY;
+  const dist = Math.hypot(rx, ry);
+  const maxR = 52;
+  if (dist > 4) {
+    const clamp = Math.min(dist, maxR) / maxR;
+    joy.dx = (rx / dist) * clamp;
+    joy.dy = (ry / dist) * clamp;
+  } else {
+    joy.dx = 0;
+    joy.dy = 0;
+  }
+});
+
+window.addEventListener('pointerup', e => {
+  if (joy.active) {
+    const dt = performance.now() - pointerDownTime;
+    const moved = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+    if (dt < 260 && moved < 14) {
+      const pScreenX = W / 2 + (player.x - cam.x);
+      const pScreenY = H / 2 + (player.y - cam.y);
+      if (Math.hypot(e.clientX - pScreenX, e.clientY - pScreenY) < 46) {
+        openModal();
+      }
+    }
+  }
+  joy.active = false;
+  joy.dx = 0;
+  joy.dy = 0;
+});
+
+// --- MODAL UI ---
+let activeTab = 'upgrades';
+const modalOverlay = document.getElementById('modalOverlay');
+document.getElementById('openModalBtn').addEventListener('click', openModal);
+document.getElementById('closeModalBtn').addEventListener('click', () => modalOverlay.classList.remove('open'));
+modalOverlay.addEventListener('click', e => {
+  if (e.target === modalOverlay) modalOverlay.classList.remove('open');
+});
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab = btn.dataset.tab;
+    renderModal();
+  });
+});
+
+function openModal() {
+  renderModal();
+  modalOverlay.classList.add('open');
+}
+
+function renderModal() {
+  const body = document.getElementById('modalBody');
+  body.innerHTML = '';
+
+  if (activeTab === 'upgrades' || activeTab === 'workers') {
+    UPGRADE_DEFS.filter(d => d.tab === activeTab).forEach(def => {
+      if (def.req && !state.unlocks[def.req]) return;
+      const lvl = state.upgrades[def.id];
+      const isMax = lvl >= def.max;
+      const cost = getUpgradeCost(def);
+      const item = document.createElement('div');
+      item.className = 'upg-item';
+      item.innerHTML = `
+        <div class="upg-info">
+          <div class="upg-icon">${def.icon}</div>
+          <div>
+            <div class="upg-name">${def.name}</div>
+            <div class="upg-lvl">${def.tab === 'upgrades' ? 'Seviye ' + lvl : lvl + ' / ' + def.max + ' Aktif'}</div>
+          </div>
+        </div>
+        <button class="buy-btn" ${isMax || state.money < cost ? 'disabled' : ''}>
+          ${isMax ? 'MAKS' : cost + ' ₺'}
+        </button>
+      `;
+      item.querySelector('button').addEventListener('click', () => {
+        if (!isMax && state.money >= cost) {
+          state.money -= cost;
+          state.upgrades[def.id]++;
+          if (def.id === 'armor') player.hp = getPlayerMaxHp();
+          syncWorkers();
+          saveGame();
+          updateHUD();
+          renderModal();
+        }
+      });
+      body.appendChild(item);
+    });
+  } else if (activeTab === 'transfer') {
+    const chap = getChap();
+    const isLast = state.chapter >= CHAPTERS.length - 1;
+    const nextChap = isLast ? chap : CHAPTERS[state.chapter + 1];
+    const ready = canTransferChapter();
+
+    const card = document.createElement('div');
+    card.className = 'transfer-card';
+    card.innerHTML = `
+      <div class="transfer-title">${chap.name}</div>
+      <div class="transfer-desc">${chap.subtitle}<br>Mevcut Prestij: <b>${state.stars} ⭐</b> (Tüm Gelirler <b>×${getPrestigeMult().toFixed(2)}</b>)</div>
+      <div class="req-list">
+        <div class="req-row"><span>🪚 Kereste Makinesi</span><span>${state.unlocks.sawmill ? '✅' : '❌'}</span></div>
+        <div class="req-row"><span>🪑 Mobilya Atölyesi</span><span>${state.unlocks.workshop ? '✅' : '❌'}</span></div>
+        <div class="req-row"><span>🌲 Altın Orman</span><span>${state.unlocks.goldForest ? '✅' : '❌'}</span></div>
+        <div class="req-row"><span>🍖 Dağ Restoranı</span><span>${state.unlocks.restaurant ? '✅' : '❌'}</span></div>
+        <div class="req-row"><span>💰 Kasa Birikimi</span><span style="color:${state.money >= chap.reqMoney ? '#4ade80' : '#fca5a5'}">${state.money} / ${chap.reqMoney} ₺</span></div>
+      </div>
+      <button class="transfer-btn" id="doTransferBtn" ${ready ? '' : 'disabled'}>
+        ${isLast ? `🔄 Kampı Devret (+${chap.rewardStars} ⭐ Prestij)` : `🚀 Kampı Devret → ${nextChap.badge} (+${chap.rewardStars} ⭐)`}
+      </button>
+    `;
+    card.querySelector('#doTransferBtn').addEventListener('click', transferToNextChapter);
+    body.appendChild(card);
+
+    // Chapter roadmap list
+    CHAPTERS.forEach(c => {
+      const done = state.completedChapters.includes(c.id);
+      const cur = state.chapter === c.id;
+      const row = document.createElement('div');
+      row.className = 'upg-item';
+      row.style.opacity = (done || cur) ? '1' : '0.55';
+      row.innerHTML = `
+        <div class="upg-info">
+          <div class="upg-icon">${c.badge.split(' ')[0]}</div>
+          <div>
+            <div class="upg-name">${c.name}</div>
+            <div class="upg-lvl">Gelir Çarpanı: ×${c.incomeScale} • Ödül: +${c.rewardStars} ⭐</div>
+          </div>
+        </div>
+        <div style="font-weight:800;font-size:12px;color:${cur ? '#fde047' : done ? '#4ade80' : '#94a3b8'}">
+          ${cur ? 'AKTİF' : done ? 'TAMAMLANDI' : 'KİLİTLİ'}
+        </div>
+      `;
+      body.appendChild(row);
+    });
+  } else if (activeTab === 'style') {
+    const shirts = [
+      { id: '#dc2626', name: 'Kırmızı' },
+      { id: '#2563eb', name: 'Mavi' },
+      { id: '#16a34a', name: 'Orman' },
+      { id: '#f59e0b', name: 'Altın' }
+    ];
+    const hats = [
+      { id: 'none', icon: '🧑', name: 'Yok' },
+      { id: 'beanie', icon: '🧶', name: 'Bere' },
+      { id: 'cowboy', icon: '🤠', name: 'Şapka' },
+      { id: 'crown', icon: '👑', name: 'Taç' }
+    ];
+    const axes = [
+      { id: 'steel', icon: '🪓', name: 'Çelik' },
+      { id: 'double', icon: '⚔️', name: 'Çift' },
+      { id: 'gold', icon: '✨', name: 'Altın' },
+      { id: 'laser', icon: '⚡', name: 'Plazma' }
+    ];
+
+    body.innerHTML = `
+      <div class="custom-section">
+        <div class="custom-label">Gömlek Rengi</div>
+        <div class="swatch-grid" id="shirtGrid"></div>
+      </div>
+      <div class="custom-section">
+        <div class="custom-label">Şapka</div>
+        <div class="swatch-grid" id="hatGrid"></div>
+      </div>
+      <div class="custom-section">
+        <div class="custom-label">Balta Görünümü</div>
+        <div class="swatch-grid" id="axeGrid"></div>
+      </div>
+    `;
+
+    const sg = body.querySelector('#shirtGrid');
+    shirts.forEach(s => {
+      const b = document.createElement('button');
+      b.className = 'swatch-btn' + (state.style.shirt === s.id ? ' selected' : '');
+      b.innerHTML = `<span class="color-dot" style="background:${s.id}"></span>${s.name}`;
+      b.onclick = () => { state.style.shirt = s.id; saveGame(); renderModal(); };
+      sg.appendChild(b);
+    });
+
+    const hg = body.querySelector('#hatGrid');
+    hats.forEach(h => {
+      const b = document.createElement('button');
+      b.className = 'swatch-btn' + (state.style.hat === h.id ? ' selected' : '');
+      b.innerHTML = `<span style="font-size:20px">${h.icon}</span>${h.name}`;
+      b.onclick = () => { state.style.hat = h.id; saveGame(); renderModal(); };
+      hg.appendChild(b);
+    });
+
+    const ag = body.querySelector('#axeGrid');
+    axes.forEach(a => {
+      const b = document.createElement('button');
+      b.className = 'swatch-btn' + (state.style.axeStyle === a.id ? ' selected' : '');
+      b.innerHTML = `<span style="font-size:20px">${a.icon}</span>${a.name}`;
+      b.onclick = () => { state.style.axeStyle = a.id; saveGame(); renderModal(); };
+      ag.appendChild(b);
+    });
+  }
+}
+
+// Smooth HUD text caching
+const lastHud = {};
+function setHudText(id, val) {
+  if (lastHud[id] !== val) {
+    lastHud[id] = val;
+    document.getElementById(id).textContent = val;
+  }
+}
+
+function updateHUD() {
+  setHudText('chapterPill', getChap().badge);
+  setHudText('moneyVal', state.money);
+  setHudText('starsVal', state.stars);
+  setHudText('multVal', getPrestigeMult().toFixed(2));
+  setHudText('bagTotalVal', getTotalBag());
+  setHudText('capVal', getMaxBag());
+  setHudText('woodVal', state.bag.wood);
+
+  const pPill = document.getElementById('plankPill');
+  pPill.style.display = state.unlocks.sawmill ? 'flex' : 'none';
+  setHudText('plankVal', state.bag.plank);
+
+  const fPill = document.getElementById('furnPill');
+  fPill.style.display = state.unlocks.workshop ? 'flex' : 'none';
+  setHudText('furnVal', state.bag.furn);
+
+  const mPill = document.getElementById('meatPill');
+  mPill.style.display = state.unlocks.restaurant ? 'flex' : 'none';
+  setHudText('rawMeatVal', state.bag.rawMeat);
+  setHudText('steakVal', state.bag.steak);
+
+  const hpPct = Math.max(0, Math.min(100, (player.hp / getPlayerMaxHp()) * 100));
+  const hpFill = document.getElementById('hpFill');
+  hpFill.style.width = hpPct + '%';
+  hpFill.style.background = hpPct > 50 ? '#22c55e' : hpPct > 25 ? '#f59e0b' : '#ef4444';
+
+  const upgBtn = document.getElementById('openModalBtn');
+  if (canTransferChapter()) {
+    upgBtn.textContent = '🚀 Devret!';
+    upgBtn.style.background = 'linear-gradient(135deg, #22c55e, #15803d)';
+  } else {
+    upgBtn.textContent = '⚡ Geliştir';
+    upgBtn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+  }
+}
+
+// --- UPDATE LOOP ---
+let padTimer = 0;
+let autoSaveTimer = 0;
+let lastTime = performance.now();
+
+function update(dt) {
+  autoSaveTimer += dt;
+  if (autoSaveTimer >= 4) {
+    autoSaveTimer = 0;
+    saveGame();
+  }
+
+  let ix = joy.dx;
+  let iy = joy.dy;
+  if (keys['w'] || keys['arrowup']) iy -= 1;
+  if (keys['s'] || keys['arrowdown']) iy += 1;
+  if (keys['a'] || keys['arrowleft']) ix -= 1;
+  if (keys['d'] || keys['arrowright']) ix += 1;
+
+  const mag = Math.hypot(ix, iy);
+  if (mag > 1) { ix /= mag; iy /= mag; }
+
+  if (mag > 0.05) {
+    const spd = getMoveSpeed();
+    player.x += ix * spd * dt;
+    player.y += iy * spd * dt;
+    resolveEntityBounds(player, 15);
+    if (Math.abs(ix) > 0.08) player.facing = ix > 0 ? 1 : -1;
+    player.walkAnim += dt * 11;
+  } else {
+    player.walkAnim = 0;
+  }
+
+  // Smooth Camera Lerp
+  const camLerp = 1 - Math.exp(-10 * dt);
+  cam.x += (player.x - cam.x) * camLerp;
+  cam.y += (player.y - cam.y) * camLerp;
+
+  // Pickup ground items
+  for (let i = groundItems.length - 1; i >= 0; i--) {
+    const gi = groundItems[i];
+    gi.bob += dt * 5;
+    if (getTotalBag() < getMaxBag() && Math.hypot(player.x - gi.x, player.y - gi.y) < 48) {
+      state.bag[gi.item]++;
+      const iconMap = { wood: '🪵', plank: '🪚', furn: '🪑', rawMeat: '🥩', steak: '🍖' };
+      addFloater(gi.x, gi.y - 16, `+1 ${iconMap[gi.item]}`, '#fef08a');
+      groundItems.splice(i, 1);
+    }
+  }
+
+  // Passive HP regen inside camps
+  if (player.y > -210 && player.hp < getPlayerMaxHp()) {
+    player.hp = Math.min(getPlayerMaxHp(), player.hp + 14 * dt);
+  }
+  if (player.hurtTimer > 0) player.hurtTimer -= dt;
+  if (player.hitCooldown > 0) player.hitCooldown -= dt;
+  if (player.swingAnim > 0) player.swingAnim = Math.max(0, player.swingAnim - dt * 4.5);
+
+  // Auto-chop nearby trees
+  let choppedOrAttacked = false;
+  if (player.hitCooldown <= 0) {
+    for (const t of trees) {
+      if (t.respawn > 0) continue;
+      if (t.gold && !state.unlocks.goldForest) continue;
+      if (Math.hypot(player.x - t.x, player.y - t.y) < 56) {
+        player.hitCooldown = 0.35;
+        player.swingAnim = 1;
+        player.facing = t.x >= player.x ? 1 : -1;
+        t.shake = 0.25;
+        t.hp -= getAttackPower();
+        addParticles(t.x, t.y - 18, t.gold ? '#fbbf24' : '#a16207', 5);
+        if (t.hp <= 0) {
+          t.respawn = t.gold ? 8 : 5.5;
+          const totalYield = t.gold ? 3 : 1;
+          const space = Math.max(0, getMaxBag() - getTotalBag());
+          const inBag = Math.min(totalYield, space);
+          const onGround = totalYield - inBag;
+
+          if (inBag > 0) {
+            state.bag.wood += inBag;
+            addFloater(t.x, t.y - 30, `+${inBag} 🪵`, '#fef08a');
+          }
+          if (onGround > 0) {
+            spawnGroundItem(t.x, t.y + 10, 'wood', onGround);
+            if (inBag === 0) addFloater(t.x, t.y - 30, '🎒 Dolu!', '#fb923c');
+          }
+        }
+        choppedOrAttacked = true;
+        break;
+      }
+    }
+  }
+
+  // Auto-attack nearby animals
+  if (!choppedOrAttacked && state.unlocks.restaurant && player.hitCooldown <= 0) {
+    for (const a of animals) {
+      if (a.respawn > 0) continue;
+      if (Math.hypot(player.x - a.x, player.y - a.y) < 56) {
+        player.hitCooldown = 0.38;
+        player.swingAnim = 1;
+        player.facing = a.x >= player.x ? 1 : -1;
+        a.shake = 0.25;
+        a.hp -= getAttackPower() * 1.25;
+        addParticles(a.x, a.y - 10, '#ef4444', 6);
+        if (a.hp <= 0) {
+          a.respawn = 9;
+          const space = Math.max(0, getMaxBag() - getTotalBag());
+          const inBag = Math.min(a.meat, space);
+          const onGround = a.meat - inBag;
+          if (inBag > 0) {
+            state.bag.rawMeat += inBag;
+            addFloater(a.x, a.y - 25, `+${inBag} 🥩`, '#fca5a5');
+          }
+          if (onGround > 0) {
+            spawnGroundItem(a.x, a.y + 10, 'rawMeat', onGround);
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  for (const t of trees) {
+    if (t.shake > 0) t.shake = Math.max(0, t.shake - dt);
+    if (t.respawn > 0) {
+      t.respawn -= dt;
+      if (t.respawn <= 0) t.hp = t.maxHp;
+    }
+  }
+
+  // Animals AI
+  if (state.unlocks.restaurant) {
+    for (const a of animals) {
+      if (a.shake > 0) a.shake = Math.max(0, a.shake - dt);
+      if (a.respawn > 0) {
+        a.respawn -= dt;
+        if (a.respawn <= 0) {
+          a.hp = a.maxHp;
+          a.x = a.homeX;
+          a.y = a.homeY;
+        }
+        continue;
+      }
+      const distP = Math.hypot(player.x - a.x, player.y - a.y);
+      if (a.aggro && distP < 210 && player.y < -235 && player.x > 500) {
+        const ang = Math.atan2(player.y - a.y, player.x - a.x);
+        if (distP > 36) {
+          a.x += Math.cos(ang) * a.speed * dt;
+          a.y += Math.sin(ang) * a.speed * dt;
+        } else {
+          a.atkTimer -= dt;
+          if (a.atkTimer <= 0) {
+            a.atkTimer = 1.05;
+            player.hp -= a.dmg;
+            player.hurtTimer = 0.25;
+            addFloater(player.x, player.y - 34, `-${a.dmg} ❤️`, '#ef4444');
+            if (player.hp <= 0) {
+              player.hp = getPlayerMaxHp();
+              player.x = 0;
+              player.y = 40;
+              state.bag.rawMeat = Math.floor(state.bag.rawMeat / 2);
+              addFloater(0, 0, '💫 Kampa Döndün', '#f87171');
+            }
+          }
+        }
+      } else if (!a.aggro && distP < 150) {
+        const ang = Math.atan2(a.y - player.y, a.x - player.x);
+        a.x += Math.cos(ang) * a.speed * dt;
+        a.y += Math.sin(ang) * a.speed * dt;
+      } else {
+        a.wanderTimer -= dt;
+        if (a.wanderTimer <= 0) {
+          a.wanderTimer = 1.5 + Math.random() * 2;
+          a.wanderAngle = Math.atan2(a.homeY - a.y, a.homeX - a.x) + (Math.random() - 0.5) * 2.2;
+        }
+        a.x += Math.cos(a.wanderAngle) * 32 * dt;
+        a.y += Math.sin(a.wanderAngle) * 32 * dt;
+      }
+      a.x = Math.max(525, Math.min(1170, a.x));
+      a.y = Math.max(-850, Math.min(-255, a.y));
+    }
+  }
+
+  // Pad interactions
+  padTimer += dt;
+  if (padTimer >= 0.14) {
+    padTimer = 0;
+    const cLim = getCounterLimit();
+    for (const key in PADS) {
+      const p = PADS[key];
+      if (p.req && !state.unlocks[p.req]) continue;
+      if (p.type === 'unlock' && state.unlocks[p.key]) continue;
+      if (p.machine === 'sawmill' && !state.unlocks.sawmill) continue;
+      if (p.machine === 'workshop' && !state.unlocks.workshop) continue;
+      if (p.machine === 'grill' && !state.unlocks.restaurant) continue;
+
+      if (Math.hypot(player.x - p.x, player.y - p.y) <= p.r + 12) {
+        if (p.type === 'unlock') {
+          const cost = getPadCost(p.key);
+          if (state.money >= cost) {
+            state.money -= cost;
+            state.unlocks[p.key] = true;
+            saveGame();
+            addParticles(p.x, p.y, '#fbbf24', 18);
+            addFloater(p.x, p.y - 25, '✨ AÇILDI!', '#fde047');
+          }
+        } else if (p.type === 'trash') {
+          if (getTotalBag() > 0) {
+            state.bag = { wood: 0, plank: 0, furn: 0, rawMeat: 0, steak: 0 };
+            addParticles(p.x, p.y, '#94a3b8', 12);
+            addFloater(p.x, p.y - 22, '🗑️ Çanta Boşaltıldı', '#cbd5e1');
+          }
+        } else if (p.type === 'in') {
+          const m = machines[p.machine];
+          if (p.machine === 'sawmill' && state.bag.wood > 0 && m.input < 12) {
+            state.bag.wood--; m.input++;
+          } else if (p.machine === 'workshop' && state.bag.plank > 0 && m.input < 10) {
+            state.bag.plank--; m.input++;
+          } else if (p.machine === 'grill' && state.bag.rawMeat > 0 && m.input < 10) {
+            state.bag.rawMeat--; m.input++;
+          }
+        } else if (p.type === 'out') {
+          const m = machines[p.machine];
+          if (m.output > 0 && getTotalBag() < getMaxBag()) {
+            m.output--;
+            if (p.machine === 'sawmill') state.bag.plank++;
+            if (p.machine === 'workshop') state.bag.furn++;
+            if (p.machine === 'grill') state.bag.steak++;
+          }
+        } else if (p.type === 'sell') {
+          if (state.bag[p.item] > 0 && state.counters[p.item] < cLim) {
+            state.bag[p.item]--;
+            state.counters[p.item]++;
+          }
+          processSale(p.item, getSellPrice(p.basePrice), p.x, p.y, true);
+        }
+      }
+    }
+  }
+
+  // Machines processing
+  ['sawmill', 'workshop', 'grill'].forEach(k => {
+    const m = machines[k];
+    if (m.input > 0 && m.output < 12) {
+      m.progress += dt;
+      if (m.progress >= m.duration) {
+        m.progress = 0;
+        m.input--;
+        m.output++;
+      }
+    } else {
+      m.progress = 0;
+    }
+  });
+
+  // Customers logic
+  custSpawnTimer -= dt;
+  if (custSpawnTimer <= 0) {
+    custSpawnTimer = 2.4;
+    spawnCustomer();
+  }
+  for (let i = customers.length - 1; i >= 0; i--) {
+    const c = customers[i];
+    const sameQueue = customers.filter(o => o.item === c.item && o.state !== 'leaving');
+    const idx = sameQueue.indexOf(c);
+    const goalY = 250 + idx * 46;
+
+    if (c.state === 'arriving' || c.state === 'waiting') {
+      const dx = c.targetX - c.x;
+      const dy = goalY - c.y;
+      const d = Math.hypot(dx, dy);
+      if (d > 4) {
+        c.x += (dx / d) * 115 * dt;
+        c.y += (dy / d) * 115 * dt;
+        c.walk += dt * 8;
+        c.state = 'arriving';
+      } else {
+        c.walk = 0;
+        c.state = 'waiting';
+      }
+    } else if (c.state === 'leaving') {
+      c.y += 145 * dt;
+      c.walk += dt * 9;
+      if (c.y > 470) customers.splice(i, 1);
+    }
+  }
+
+  // Workers AI
+  const cLim = getCounterLimit();
+  const atkPow = getAttackPower();
+  workers.forEach(w => {
+    if (w.role === 'lumberjack') {
+      if (w.swing > 0) w.swing = Math.max(0, w.swing - dt * 4);
+      if (w.bag < w.cap) {
+        let best = null, bd = 9999;
+        for (const t of trees) {
+          if (t.respawn > 0 || (t.gold && !state.unlocks.goldForest)) continue;
+          const d = Math.hypot(w.x - t.x, w.y - t.y);
+          if (d < bd) { bd = d; best = t; }
+        }
+        if (best) {
+          if (bd > 44) {
+            moveWorkerTowards(w, best.x, best.y, 130, dt);
+          } else {
+            w.walk = 0;
+            if (w.swing <= 0) {
+              w.swing = 1;
+              w.facing = best.x >= w.x ? 1 : -1;
+              best.hp -= 1.2 + atkPow * 0.35;
+              best.shake = 0.2;
+              if (best.hp <= 0) {
+                best.respawn = best.gold ? 8 : 5.5;
+                w.bag += best.gold ? 2 : 1;
+              }
+            }
+          }
+        }
+      } else {
+        let tx = PADS.sellWood.x, ty = PADS.sellWood.y - 20, destType = 'woodCounter';
+        if (state.unlocks.sawmill && machines.sawmill.input < 6) {
+          tx = PADS.sawmillIn.x; ty = PADS.sawmillIn.y; destType = 'sawmill';
+        } else if (state.counters.wood < cLim) {
+          tx = PADS.sellWood.x; ty = PADS.sellWood.y - 20; destType = 'woodCounter';
+        } else if (state.unlocks.sawmill && machines.sawmill.input < 12) {
+          tx = PADS.sawmillIn.x; ty = PADS.sawmillIn.y; destType = 'sawmill';
+        }
+
+        const d = Math.hypot(tx - w.x, ty - w.y);
+        if (d > 24) {
+          moveWorkerTowards(w, tx, ty, 138, dt);
+        } else {
+          w.walk = 0;
+          if (destType === 'sawmill') {
+            const put = Math.min(w.bag, 12 - machines.sawmill.input);
+            machines.sawmill.input += put;
+            w.bag -= put;
+          } else if (state.counters.wood < cLim) {
+            const put = Math.min(w.bag, cLim - state.counters.wood);
+            state.counters.wood += put;
+            w.bag -= put;
+          }
+        }
+      }
+    } else if (w.role === 'carrier') {
+      if (!w.carryItem || w.carryAmt <= 0) {
+        w.carryItem = null;
+        w.carryAmt = 0;
+        let targetPad = null, pickType = null;
+        if (state.unlocks.workshop && machines.workshop.output > 0 && state.counters.furn < cLim) {
+          targetPad = PADS.workOut; pickType = 'furn';
+        } else if (state.unlocks.sawmill && machines.sawmill.output > 0) {
+          if (state.unlocks.workshop && machines.workshop.input < 6 && state.counters.plank >= Math.min(3, cLim)) {
+            targetPad = PADS.sawmillOut; pickType = 'plank_to_work';
+          } else if (state.counters.plank < cLim) {
+            targetPad = PADS.sawmillOut; pickType = 'plank';
+          } else if (state.unlocks.workshop && machines.workshop.input < 10) {
+            targetPad = PADS.sawmillOut; pickType = 'plank_to_work';
+          }
+        } else if (state.unlocks.restaurant && machines.grill.output > 0 && state.counters.steak < cLim) {
+          targetPad = PADS.grillOut; pickType = 'steak';
+        }
+
+        if (targetPad) {
+          const d = Math.hypot(targetPad.x - w.x, targetPad.y - w.y);
+          if (d > 22) {
+            moveWorkerTowards(w, targetPad.x, targetPad.y, 148, dt);
+          } else {
+            w.walk = 0;
+            const mKey = targetPad.machine;
+            const take = Math.min(w.cap, machines[mKey].output);
+            if (take > 0) {
+              machines[mKey].output -= take;
+              w.carryItem = pickType;
+              w.carryAmt = take;
+            }
+          }
+        } else {
+          w.walk = 0;
+        }
+      } else {
+        let destX = PADS.sellPlank.x, destY = PADS.sellPlank.y - 20;
+        if (w.carryItem === 'furn') { destX = PADS.sellFurn.x; destY = PADS.sellFurn.y - 20; }
+        else if (w.carryItem === 'plank_to_work') { destX = PADS.workIn.x; destY = PADS.workIn.y; }
+        else if (w.carryItem === 'steak') { destX = PADS.sellSteak.x; destY = PADS.sellSteak.y - 20; }
+
+        const d = Math.hypot(destX - w.x, destY - w.y);
+        if (d > 22) {
+          moveWorkerTowards(w, destX, destY, 148, dt);
+        } else {
+          w.walk = 0;
+          if (w.carryItem === 'plank_to_work') {
+            machines.workshop.input += w.carryAmt;
+            w.carryAmt = 0;
+            w.carryItem = null;
+          } else {
+            const key = w.carryItem;
+            const space = Math.max(0, cLim - state.counters[key]);
+            const put = Math.min(w.carryAmt, space);
+            state.counters[key] += put;
+            w.carryAmt -= put;
+            if (w.carryAmt <= 0) w.carryItem = null;
+          }
+        }
+      }
+    } else if (w.role === 'cashier') {
+      w.timer += dt;
+      if (w.timer >= 0.42) {
+        w.timer = 0;
+        if (w.x < -80) processSale('wood', getSellPrice(10), w.x, w.y, false);
+        else if (w.x < 80 && state.unlocks.sawmill) processSale('plank', getSellPrice(32), w.x, w.y, false);
+        else if (state.unlocks.workshop) processSale('furn', getSellPrice(95), w.x, w.y, false);
+      }
+    } else if (w.role === 'hunter' && state.unlocks.restaurant) {
+      if (w.swing > 0) w.swing = Math.max(0, w.swing - dt * 4);
+      if (w.bag < w.cap) {
+        let best = null, bd = 9999;
+        for (const a of animals) {
+          if (a.respawn > 0) continue;
+          const d = Math.hypot(w.x - a.x, w.y - a.y);
+          if (d < bd) { bd = d; best = a; }
+        }
+        if (best) {
+          if (bd > 44) {
+            moveWorkerTowards(w, best.x, best.y, 138, dt);
+          } else {
+            w.walk = 0;
+            if (w.swing <= 0) {
+              w.swing = 1;
+              w.facing = best.x >= w.x ? 1 : -1;
+              best.hp -= 2.5 + atkPow * 0.5;
+              best.shake = 0.2;
+              if (best.hp <= 0) {
+                best.respawn = 9;
+                w.bag += best.meat;
+              }
+            }
+          }
+        }
+      } else {
+        const tx = PADS.grillIn.x, ty = PADS.grillIn.y;
+        const d = Math.hypot(tx - w.x, ty - w.y);
+        if (d > 24) {
+          moveWorkerTowards(w, tx, ty, 145, dt);
+        } else {
+          w.walk = 0;
+          machines.grill.input += w.bag;
+          w.bag = 0;
+        }
+      }
+    } else if (w.role === 'waiter' && state.unlocks.restaurant) {
+      w.timer += dt;
+      if (w.timer >= 0.42) {
+        w.timer = 0;
+        processSale('steak', getSellPrice(145), w.x, w.y, false);
+      }
+    }
+  });
+
+  for (let i = floaters.length - 1; i >= 0; i--) {
+    floaters[i].y -= 36 * dt;
+    floaters[i].life -= dt * 1.1;
+    if (floaters[i].life <= 0) floaters.splice(i, 1);
+  }
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 180 * dt;
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+
+  updateHUD();
+}
+
+function processSale(item, price, px, py, allowFromPlayerBag) {
+  const cust = customers.find(c => c.item === item && c.state === 'waiting' && c.want > 0);
+  if (!cust) return;
+
+  if (state.counters[item] > 0) {
+    state.counters[item]--;
+  } else if (allowFromPlayerBag && state.bag[item] > 0) {
+    state.bag[item]--;
+  } else {
+    return;
+  }
+
+  cust.want--;
+  state.money += price;
+  addFloater(px, py - 24, `+${price} ₺`, '#4ade80');
+  if (cust.want <= 0) {
+    cust.state = 'leaving';
+  }
+}
+
+// --- RENDERING ---
+function drawOutlinedText(text, x, y, size = 14, color = '#fff') {
+  ctx.font = `800 ${size}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+  ctx.strokeText(text, x, y);
+  ctx.fillStyle = color;
+  ctx.fillText(text, x, y);
+}
+
+function drawFences() {
+  ctx.strokeStyle = '#78350f';
+  ctx.lineWidth = 7;
+  ctx.lineCap = 'round';
+  const step = 32;
+
+  for (const seg of FENCE_SEGMENTS) {
+    if (seg.req && !state.unlocks[seg.req]) continue;
+    if (seg.lockKey && state.unlocks[seg.lockKey]) continue;
+
+    ctx.beginPath();
+    ctx.moveTo(seg.x1, seg.y1);
+    ctx.lineTo(seg.x2, seg.y2);
+    ctx.stroke();
+
+    const len = Math.hypot(seg.x2 - seg.x1, seg.y2 - seg.y1);
+    const steps = Math.max(1, Math.round(len / step));
+    for (let i = 0; i <= steps; i++) {
+      const px = seg.x1 + (seg.x2 - seg.x1) * (i / steps);
+      const py = seg.y1 + (seg.y2 - seg.y1) * (i / steps);
+      drawFencePost(px, py);
+    }
+  }
+}
+
+function drawFencePost(x, y) {
+  ctx.fillStyle = '#b45309';
+  ctx.beginPath();
+  ctx.arc(x, y, 5.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#451a03';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.strokeStyle = '#78350f';
+  ctx.lineWidth = 7;
+}
+
+function drawCounterShelf(x, y, item, count, maxCount) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  ctx.fillStyle = '#5c2d16';
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(-28, -14, 56, 26, 7);
+  ctx.fill();
+  ctx.stroke();
+
+  const show = Math.min(count, 10);
+  for (let i = 0; i < show; i++) {
+    const col = i % 5;
+    const row = Math.floor(i / 5);
+    ctx.fillStyle = item === 'wood' ? '#b45309' : item === 'plank' ? '#f59e0b' : item === 'furn' ? '#d97706' : '#dc2626';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(-22 + col * 9, -8 - row * 6, 7, 12, 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  drawOutlinedText(`${count}/${maxCount}`, 0, -24, 12, count >= maxCount ? '#f87171' : '#fde047');
+  ctx.restore();
+}
+
+function drawPad(p) {
+  if (p.req && !state.unlocks[p.req]) return;
+  if (p.type === 'unlock' && state.unlocks[p.key]) return;
+  if (p.machine === 'sawmill' && !state.unlocks.sawmill) return;
+  if (p.machine === 'workshop' && !state.unlocks.workshop) return;
+  if (p.machine === 'grill' && !state.unlocks.restaurant) return;
+
+  const dist = Math.hypot(player.x - p.x, player.y - p.y);
+  const active = dist <= p.r + 12;
+
+  ctx.save();
+  ctx.translate(p.x, p.y);
+
+  ctx.beginPath();
+  ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+  if (p.type === 'unlock') {
+    ctx.fillStyle = active ? 'rgba(250, 204, 21, 0.34)' : 'rgba(250, 204, 21, 0.16)';
+    ctx.strokeStyle = '#facc15';
+  } else if (p.type === 'sell') {
+    ctx.fillStyle = active ? 'rgba(34, 197, 94, 0.32)' : 'rgba(34, 197, 94, 0.16)';
+    ctx.strokeStyle = '#4ade80';
+  } else if (p.type === 'trash') {
+    ctx.fillStyle = active ? 'rgba(239, 68, 68, 0.35)' : 'rgba(239, 68, 68, 0.16)';
+    ctx.strokeStyle = '#f87171';
+  } else {
+    ctx.fillStyle = active ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.12)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+  }
+  ctx.lineWidth = active ? 3.5 : 2.5;
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.font = '21px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(p.icon, 0, p.type === 'trash' ? 0 : -6);
+
+  if (p.type === 'unlock') {
+    drawOutlinedText(`${getPadCost(p.key)} ₺`, 0, 15, 12, '#fde047');
+  } else if (p.type === 'sell') {
+    drawOutlinedText(`${getSellPrice(p.basePrice)} ₺`, 0, 15, 12, '#86efac');
+  } else if (p.type === 'in') {
+    const cnt = machines[p.machine].input;
+    drawOutlinedText(`${cnt}`, 0, 15, 13, '#fff');
+  } else if (p.type === 'out') {
+    const cnt = machines[p.machine].output;
+    drawOutlinedText(`${cnt}`, 0, 15, 13, '#fde047');
+  }
+
+  ctx.restore();
+}
+
+function drawMachine(x, y, icon, machineKey) {
+  if (machineKey === 'sawmill' && !state.unlocks.sawmill) return;
+  if (machineKey === 'workshop' && !state.unlocks.workshop) return;
+  if (machineKey === 'grill' && !state.unlocks.restaurant) return;
+
+  const m = machines[machineKey];
+  ctx.save();
+  ctx.translate(x, y);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.roundRect(-26, -20, 52, 44, 12);
+  ctx.fill();
+
+  ctx.fillStyle = machineKey === 'grill' ? '#334155' : '#92400e';
+  ctx.strokeStyle = '#f8fafc';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(-24, -24, 48, 44, 12);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.font = '24px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(icon, 0, -2);
+
+  if (m.input > 0) {
+    const pct = m.progress / m.duration;
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(-20, -34, 40, 6);
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(-20, -34, 40 * pct, 6);
+  }
+
+  ctx.restore();
+}
+
+function drawTree(t) {
+  if (t.gold && !state.unlocks.goldForest) return;
+  ctx.save();
+  const sx = t.shake > 0 ? Math.sin(t.shake * 55) * 4 : 0;
+  ctx.translate(t.x + sx, t.y);
+
+  if (t.respawn > 0) {
+    ctx.fillStyle = t.gold ? '#b45309' : '#78350f';
+    ctx.beginPath();
+    ctx.ellipse(0, 4, 11, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    return;
+  }
+
+  ctx.scale(t.scale, t.scale);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(4, 12, 24, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#5c2d16';
+  ctx.fillRect(-6, -12, 12, 22);
+
+  const chap = getChap();
+  const [c1, c2, c3] = t.gold ? chap.goldTreePalette : chap.treePalette;
+
+  ctx.fillStyle = c1;
+  ctx.beginPath(); ctx.arc(0, -20, 26, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = c2;
+  ctx.beginPath(); ctx.arc(-6, -28, 20, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = c3;
+  ctx.beginPath(); ctx.arc(6, -32, 17, 0, Math.PI * 2); ctx.fill();
+
+  if (t.hp < t.maxHp) {
+    const pct = Math.max(0, t.hp / t.maxHp);
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(-18, -62, 36, 5);
+    ctx.fillStyle = '#fde047';
+    ctx.fillRect(-18, -62, 36 * pct, 5);
+  }
+
+  ctx.restore();
+}
+
+function drawAnimal(a) {
+  if (!state.unlocks.restaurant || a.respawn > 0) return;
+  ctx.save();
+  const sx = a.shake > 0 ? Math.sin(a.shake * 55) * 4 : 0;
+  ctx.translate(a.x + sx, a.y);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath();
+  ctx.ellipse(0, 12, 18, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (a.aggro) {
+    ctx.strokeStyle = 'rgba(239, 68, 68, 0.45)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 22, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.font = '30px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(a.icon, 0, -2);
+
+  if (a.hp < a.maxHp) {
+    const pct = Math.max(0, a.hp / a.maxHp);
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(-18, -26, 36, 5);
+    ctx.fillStyle = a.aggro ? '#ef4444' : '#22c55e';
+    ctx.fillRect(-18, -26, 36 * pct, 5);
+  }
+  ctx.restore();
+}
+
+function drawCharacter(x, y, shirtColor, hat, axeStyle, walkAnim, swingAnim, facing = 1, bagItems = []) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  const bob = Math.abs(Math.sin(walkAnim)) * 4;
+  const tilt = Math.sin(walkAnim) * 0.06;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.32)';
+  ctx.beginPath();
+  ctx.ellipse(0, 14, 15, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.save();
+  ctx.rotate(tilt);
+
+  const legOff = Math.sin(walkAnim) * 5.5;
+  ctx.fillStyle = '#1e293b';
+  ctx.beginPath(); ctx.roundRect(-8, 2 + legOff * 0.45, 6, 12, 3); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(2, 2 - legOff * 0.45, 6, 12, 3); ctx.fill();
+
+  if (bagItems.length > 0) {
+    const show = Math.min(bagItems.length, 8);
+    const bx = facing === 1 ? -17 : 7;
+    for (let i = 0; i < show; i++) {
+      const it = bagItems[i];
+      ctx.fillStyle = it === 'wood' ? '#92400e' : it === 'plank' ? '#f59e0b' : it === 'furn' ? '#d97706' : it === 'rawMeat' ? '#ef4444' : '#7f1d1d';
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.roundRect(bx, -14 - i * 4.5 - bob, 10, 4.5, 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+
+  ctx.fillStyle = shirtColor;
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(-12, -14 - bob, 24, 20, 7);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#fed7aa';
+  ctx.beginPath();
+  ctx.arc(0, -23 - bob, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#0f172a';
+  const eyeX = facing === 1 ? 4 : -4;
+  ctx.beginPath(); ctx.arc(eyeX, -24 - bob, 1.5, 0, Math.PI * 2); ctx.fill();
+
+  if (hat === 'beanie') {
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath(); ctx.arc(0, -26 - bob, 10.5, Math.PI, 0); ctx.fill();
+  } else if (hat === 'cowboy') {
+    ctx.fillStyle = '#78350f';
+    ctx.beginPath(); ctx.ellipse(0, -30 - bob, 16, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillRect(-8, -37 - bob, 16, 8);
+  } else if (hat === 'crown') {
+    ctx.font = '16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('👑', 0, -36 - bob);
+  }
+
+  if (axeStyle !== 'none') {
+    ctx.save();
+    ctx.translate(facing * 13, -8 - bob);
+    ctx.scale(facing, 1);
+    const swingAngle = swingAnim > 0 ? Math.sin(swingAnim * Math.PI) * 1.65 : 0.22;
+    ctx.rotate(swingAngle);
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(-2, -16, 4, 20);
+    ctx.fillStyle = axeStyle === 'gold' ? '#facc15' : axeStyle === 'laser' ? '#38bdf8' : '#cbd5e1';
+    ctx.beginPath();
+    ctx.moveTo(0, -16);
+    ctx.lineTo(10, -19);
+    ctx.lineTo(10, -10);
+    ctx.lineTo(0, -12);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  ctx.restore();
+  ctx.restore();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const chap = getChap();
+
+  ctx.save();
+  ctx.translate(W / 2 - cam.x, H / 2 - cam.y);
+
+  // --- BIOME THEMED FLOORS ---
+  ctx.fillStyle = chap.groundBg;
+  ctx.fillRect(-700, -1000, 2100, 1650);
+
+  if (state.unlocks.goldForest) {
+    ctx.fillStyle = chap.goldGround;
+    ctx.beginPath();
+    ctx.roundRect(165, -830, 325, 580, 28);
+    ctx.fill();
+  }
+
+  if (state.unlocks.restaurant) {
+    ctx.fillStyle = chap.mountainBg;
+    ctx.beginPath();
+    ctx.roundRect(500, -890, 710, 670, 32);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.beginPath(); ctx.arc(650, -450, 45, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(960, -640, 60, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Customer Street
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(-700, 225, 2100, 320);
+  ctx.fillStyle = '#64748b';
+  ctx.fillRect(-700, 220, 2100, 18);
+
+  // Lumber Camp Floor
+  ctx.fillStyle = chap.campFloor;
+  ctx.beginPath();
+  ctx.roundRect(-280, -220, 560, 440, 18);
+  ctx.fill();
+
+  // Chapter Banner on Camp Ground
+  drawOutlinedText(chap.name.toUpperCase(), 0, -175, 13, 'rgba(255,255,255,0.45)');
+
+  // Restaurant Floor
+  if (state.unlocks.restaurant) {
+    ctx.fillStyle = '#6b4c35';
+    ctx.fillRect(275, -60, 70, 130);
+
+    ctx.fillStyle = chap.restFloor;
+    ctx.beginPath();
+    ctx.roundRect(340, -220, 500, 440, 18);
+    ctx.fill();
+
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(535, -245, 130, 45);
+  }
+
+  drawFences();
+
+  for (const k in PADS) drawPad(PADS[k]);
+
+  const cLim = getCounterLimit();
+  drawCounterShelf(-165, 204, 'wood', state.counters.wood, cLim);
+  if (state.unlocks.sawmill) drawCounterShelf(0, 204, 'plank', state.counters.plank, cLim);
+  if (state.unlocks.workshop) drawCounterShelf(165, 204, 'furn', state.counters.furn, cLim);
+  if (state.unlocks.restaurant) drawCounterShelf(590, 204, 'steak', state.counters.steak, cLim);
+
+  drawMachine(-122, -35, '🪚', 'sawmill');
+  drawMachine(122, -35, '🪑', 'workshop');
+  drawMachine(492, -45, '🔥', 'grill');
+
+  groundItems.forEach(gi => {
+    const yOff = Math.sin(gi.bob) * 3;
+    ctx.font = '20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const ic = gi.item === 'wood' ? '🪵' : gi.item === 'plank' ? '🪚' : gi.item === 'furn' ? '🪑' : '🥩';
+    ctx.fillText(ic, gi.x, gi.y + yOff);
+  });
+
+  const renderList = [];
+  trees.forEach(t => renderList.push({ y: t.y, fn: () => drawTree(t) }));
+  animals.forEach(a => renderList.push({ y: a.y, fn: () => drawAnimal(a) }));
+
+  customers.forEach(c => {
+    renderList.push({
+      y: c.y,
+      fn: () => {
+        drawCharacter(c.x, c.y, c.color, 'none', 'none', c.walk, 0, 1);
+        if (c.state !== 'leaving') {
+          const ic = c.item === 'wood' ? '🪵' : c.item === 'plank' ? '🪚' : c.item === 'furn' ? '🪑' : '🍖';
+          drawOutlinedText(`${ic}×${c.want}`, c.x, c.y - 44, 13, '#fff');
+        }
+      }
+    });
+  });
+
+  workers.forEach(w => {
+    renderList.push({
+      y: w.y,
+      fn: () => {
+        const shirt = w.role === 'lumberjack' ? '#f59e0b' : w.role === 'carrier' ? '#a855f7' : w.role === 'cashier' ? '#3b82f6' : w.role === 'hunter' ? '#10b981' : '#e11d48';
+        const hat = w.role === 'hunter' ? 'cowboy' : 'beanie';
+        let stack = [];
+        if (w.role === 'lumberjack') stack = Array(w.bag || 0).fill('wood');
+        else if (w.role === 'hunter') stack = Array(w.bag || 0).fill('rawMeat');
+        else if (w.role === 'carrier' && w.carryAmt > 0) {
+          const t = w.carryItem === 'plank_to_work' ? 'plank' : w.carryItem;
+          stack = Array(w.carryAmt).fill(t);
+        }
+        drawCharacter(w.x, w.y, shirt, hat, w.role === 'carrier' || w.role === 'cashier' || w.role === 'waiter' ? 'none' : 'steel', w.walk || 0, w.swing || 0, w.facing || 1, stack);
+      }
+    });
+  });
+
+  const pStack = [];
+  for (let i = 0; i < state.bag.wood; i++) pStack.push('wood');
+  for (let i = 0; i < state.bag.plank; i++) pStack.push('plank');
+  for (let i = 0; i < state.bag.furn; i++) pStack.push('furn');
+  for (let i = 0; i < state.bag.rawMeat; i++) pStack.push('rawMeat');
+  for (let i = 0; i < state.bag.steak; i++) pStack.push('steak');
+
+  renderList.push({
+    y: player.y,
+    fn: () => {
+      drawCharacter(player.x, player.y, state.style.shirt, state.style.hat, state.style.axeStyle, player.walkAnim, player.swingAnim, player.facing, pStack);
+    }
+  });
+
+  renderList.sort((a, b) => a.y - b.y);
+  renderList.forEach(r => r.fn());
+
+  particles.forEach(p => {
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  floaters.forEach(f => {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, f.life);
+    drawOutlinedText(f.text, f.x, f.y, 15, f.color);
+    ctx.restore();
+  });
+
+  ctx.restore();
+
+  if (joy.active) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(joy.startX, joy.startY, 50, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.arc(joy.startX + joy.dx * 50, joy.startY + joy.dy * 50, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function loop(now) {
+  const dt = Math.min((now - lastTime) / 1000, 0.05);
+  lastTime = now;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+
+updateHUD();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
